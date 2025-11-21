@@ -1,5 +1,5 @@
-import { schema } from 'mongoose';
-
+import { Schema } from 'mongoose';
+import mongoose from 'mongoose';
 const cardSchema = new schema(
   {
     author: {
