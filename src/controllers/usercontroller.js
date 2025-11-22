@@ -7,6 +7,74 @@ import {
 import { ApiResponse } from '../utilities/APIResponse.js';
 import { User } from '../models/user.models.js';
 
+const COOKIE_OPTIONS = {
+  httpOnly: true,
+  secure: true,
+};
+
+const generateAccessAndRefreshToken = async userId => {
+  try {
+    const user = await User.findById(userId);
+    if (!user) {
+      throw new ApiError(404, 'User not found');
+    }
+    const accessToken = user.generateAccessToken();
+    const refreshToken = user.generateRefreshToken();
+
+    user.refreshToken = refreshToken;
+    await user.save({ validateBeforeSave: false });
+    return { accessToken, refreshToken };
+  } catch (error) {
+    throw new ApiError(500, 'Token generation failed');
+  }
+};
+
+const loginUser = asyncHandler(async (req, res) => {
+  const { username, email, password } = req.body;
+
+  if (!email && !username) {
+    throw new ApiError(400, 'Email or Username is required');
+  }
+  if (!password) {
+    throw new ApiError(400, 'Password is required');
+  }
+
+  const user = await User.findOne({
+    $or: [{ email }, { username }],
+  });
+
+  if (!user) {
+    throw new ApiError(404, 'User not found');
+  }
+
+  const isPassValid = await user.isPassCorrect(password);
+  if (!isPassValid) {
+    throw new ApiError(401, 'Incorrect password');
+  }
+  const { accessToken, refreshToken } = await generateAccessAndRefreshToken(
+    user._id
+  );
+
+  const loggedInUser = await User.findById(user._id).select(
+    '-password -refreshToken'
+  );
+
+  return res
+    .status(200)
+    .cookie('refreshToken', refreshToken, COOKIE_OPTIONS)
+    .json(
+      new ApiResponse(
+        200,
+        {
+          user: loggedInUser,
+          accessToken,
+          refreshToken,
+        },
+        'User logged In successfully'
+      )
+    );
+});
+
 const registerUser = asyncHandler(async (req, res) => {
   const { username, fullName, email, password } = req.body;
 
@@ -90,6 +158,6 @@ const registerUser = asyncHandler(async (req, res) => {
   }
 });
 
-export { registerUser };
+export { registerUser, loginUser, generateAccessAndRefreshToken };
 
 export default registerUser;
