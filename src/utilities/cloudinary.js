@@ -1,15 +1,29 @@
 import { v2 as cloudinary } from 'cloudinary';
 import { log } from 'console';
 import fs from 'fs';
-import dotenv from 'dotenv';
 
-dotenv.config();
+const configureCloudinary = () => {
+  if (
+    !process.env.CLOUD_NAME ||
+    !process.env.CLOUD_API_KEY ||
+    !process.env.CLOUD_API_SECRET
+  ) {
+    console.error(
+      'Individual Cloudinary credentials not found in environment variables!'
+    );
+    throw new Error(
+      'Cloudinary configuration failed: Missing CLOUD_NAME, API_KEY, or API_SECRET'
+    );
+  }
 
-cloudinary.config({
-  cloud_name: process.env.CLOUD_NAME,
-  api_key: process.env.CLOUD_API_KEY,
-  api_secret: process.env.CLOUD_API_SECRET,
-});
+  // 💡 Use individual variables for maximum stability
+  cloudinary.config({
+    cloud_name: process.env.CLOUD_NAME,
+    api_key: process.env.CLOUD_API_KEY,
+    api_secret: process.env.CLOUD_API_SECRET,
+  });
+  console.log('Cloudinary configured successfully.');
+};
 
 const uploadOnCloudinary = async filePath => {
   try {
@@ -22,7 +36,7 @@ const uploadOnCloudinary = async filePath => {
     return response;
   } catch (error) {
     fs.unlinkSync(filePath);
-    return error;
+    throw error;
   }
 };
 const deleteFromCloudinary = async publicId => {
@@ -35,6 +49,6 @@ const deleteFromCloudinary = async publicId => {
     return error;
   }
 };
-export { uploadOnCloudinary, deleteFromCloudinary };
+export { uploadOnCloudinary, deleteFromCloudinary, configureCloudinary };
 
 export default cloudinary;
