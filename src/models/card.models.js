@@ -1,6 +1,6 @@
 import { Schema } from 'mongoose';
 import mongoose from 'mongoose';
-const cardSchema = new schema(
+const cardSchema = new mongoose.Schema(
   {
     author: {
       type: mongoose.Schema.Types.ObjectId,
@@ -17,3 +17,5 @@ const cardSchema = new schema(
   },
   { timestamps: true }
 );
+
+export const Card = mongoose.model('Card', cardSchema);
