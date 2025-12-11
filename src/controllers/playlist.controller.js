@@ -35,13 +35,14 @@ const getUserPlaylists = asyncHandler(async (req, res) => {
     throw new ApiError(400, 'Invalid User ID');
   }
 
-  // Aggregate to fetch playlists and possibly first video thumbnail?
-  // Simple find works too, but let's see if we want to sort.
-
   const playlists = await Playlist.aggregate([
     {
       $match: {
         owner: new mongoose.Types.ObjectId(userId),
+        $or: [
+          { isPrivate: false },
+          { owner: new mongoose.Types.ObjectId(req.user?._id) },
+        ],
       },
     },
     {
@@ -51,7 +52,6 @@ const getUserPlaylists = asyncHandler(async (req, res) => {
         foreignField: '_id',
         as: 'videos',
         pipeline: [
-          // Get first video for thumbnail
           {
             $project: {
               thumbnail: 1,
@@ -74,7 +74,7 @@ const getUserPlaylists = asyncHandler(async (req, res) => {
     },
     {
       $project: {
-        videos: 0, // Don't return all videos, just the structure + thumb
+        videos: 0,
       },
     },
     {
@@ -100,6 +100,10 @@ const getPlaylistById = asyncHandler(async (req, res) => {
     {
       $match: {
         _id: new mongoose.Types.ObjectId(playlistId),
+        $or: [
+          { isPrivate: false },
+          { owner: new mongoose.Types.ObjectId(req.user?._id) },
+        ],
       },
     },
     {

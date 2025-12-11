@@ -160,11 +160,6 @@ const updateCard = asyncHandler(async (req, res) => {
     throw new ApiError(403, 'You are not authorized to update this card');
   }
 
-  // NOTE: Currently only supporting content update.
-  // Replacing media would require deleting old and uploading new, which is complex.
-  // Usually platforms allow editing text, but media change often requires new post.
-  // For simplicity, we only update content if provided.
-
   if (content) card.content = content;
 
   await card.save({ validateBeforeSave: false });
@@ -192,9 +187,6 @@ const deleteCard = asyncHandler(async (req, res) => {
 
   // Delete assets from Cloudinary
   if (card.image) {
-    // Assuming naive simple extraction or stored public_id pattern
-    // As noted in video controller, this assumes we can deduce public_id
-    // Since we don't store it, we attempt extraction:
     const publicId = card.image.split('/').pop().split('.')[0];
     await deleteFromCloudinary(publicId);
   }

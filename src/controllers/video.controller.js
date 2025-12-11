@@ -82,18 +82,24 @@ const publishAVideo = asyncHandler(async (req, res) => {
     throw new ApiError(400, 'Thumbnail file is required');
   }
 
-  const videoFile = await uploadOnCloudinary(videoLocalPath);
-  const thumbnail = await uploadOnCloudinary(thumbnailLocalPath);
+  const videoFileResponse = await uploadOnCloudinary(videoLocalPath);
+  const thumbnailResponse = await uploadOnCloudinary(thumbnailLocalPath);
 
-  if (!videoFile) throw new ApiError(500, 'Video file upload failed');
-  if (!thumbnail) throw new ApiError(500, 'Thumbnail upload failed');
+  if (!videoFileResponse) throw new ApiError(500, 'Video file upload failed');
+  if (!thumbnailResponse) throw new ApiError(500, 'Thumbnail upload failed');
 
   const video = await Video.create({
     title,
     description,
-    videoFile: videoFile.url,
-    thumbnail: thumbnail.url,
-    duration: videoFile.duration,
+    videoFile: {
+      url: videoFileResponse.url,
+      publicId: videoFileResponse.public_id,
+    },
+    thumbnail: {
+      url: thumbnailResponse.url,
+      publicId: thumbnailResponse.public_id,
+    },
+    duration: videoFileResponse.duration,
     owner: req.user._id,
     isPublished: true,
   });
@@ -188,15 +194,17 @@ const getVideoById = asyncHandler(async (req, res) => {
     throw new ApiError(404, 'Video not found');
   }
 
-  // Update watch history if user is logged in
   if (req.user?._id) {
     await User.findByIdAndUpdate(req.user._id, {
       $addToSet: {
-        // Use addToSet to avoid duplicates provided logic is unique views
         watchHistory: videoId,
       },
     });
   }
+
+  await Video.findByIdAndUpdate(videoId, {
+    $inc: { views: 1 },
+  });
 
   return res
     .status(200)
@@ -228,39 +236,23 @@ const updateVideo = asyncHandler(async (req, res) => {
   const thumbnailLocalPath = req.file?.path;
 
   if (thumbnailLocalPath) {
-    const thumbnail = await uploadOnCloudinary(thumbnailLocalPath);
+    const thumbnailResponse = await uploadOnCloudinary(thumbnailLocalPath);
 
-    if (!thumbnail) {
+    if (!thumbnailResponse) {
       throw new ApiError(500, 'Thumbnail upload failed');
     }
 
-    if (video.thumbnail) {
-      // Extract publicId from url or store publicId in db?
-      // Assuming url structure or using a helper if exists.
-      // Since video.thumbnail is just a URL in the schema usually, extracting publicId can be tricky without storing it.
-      // However, usually we should store public_id. Looking at create logic:
-      // videoFile: videoFile.url, thumbnail: thumbnail.url
-      // It seems we only store URL. Deleting might be hard without publicId.
-      // But let's look at deleteFromCloudinary implementation in Step 17.
-      // deleteFromCloudinary takes 'publicId'.
-      // If we don't store publicId, we can't reliably delete.
-      // For now, I will skip deleting the OLD thumbnail if I can't easily get the ID, or I'll try to extract it.
-      // A common pattern is storing matches from the URL.
-      // Let's assume for now we just upload the new one.
-      // Wait, the prompt says "delete a video document and its files (video and thumbnail) from Cloudinary".
-      // So I MUST delete.
-      // I'll try to extract public id from url if possible.
-      // Url example: http://res.cloudinary.com/demo/image/upload/v1312461204/sample.jpg
-      // public_id is 'sample'.
-      // Let's add a helper logic or just do it.
-      // actually, let's just implement the update and note that deletion might need public_id.
-      // inspecting video.model.js might reveal if public_id is stored?
-      // In Step 13 lines 91-92: videoFile.url, thumbnail.url. No public_id stored.
-      // This is a flaw in the existing codebase. I will try to parse it.
-      // const publicId = video.thumbnail.split('/').pop().split('.')[0];
-      // This is a simple heuristic.
+    if (video.thumbnail && video.thumbnail.publicId) {
+      await deleteFromCloudinary(video.thumbnail.publicId);
+    } else if (typeof video.thumbnail === 'string') {
+      const publicId = video.thumbnail.split('/').pop().split('.')[0];
+      await deleteFromCloudinary(publicId);
     }
-    video.thumbnail = thumbnail.url;
+
+    video.thumbnail = {
+      url: thumbnailResponse.url,
+      publicId: thumbnailResponse.public_id,
+    };
   }
 
   if (title) video.title = title;
@@ -292,17 +284,21 @@ const deleteVideo = asyncHandler(async (req, res) => {
 
   // Delete assets from Cloudinary
   if (video.videoFile) {
-    const videoPublicId = video.videoFile.split('/').pop().split('.')[0];
-    await deleteFromCloudinary(videoPublicId, 'video'); // resource_type 'video' might be needed?
-    // deleteFromCloudinary in Step 17 does NOT take resource_type arg, it uses 'auto' or 'image' default?
-    // Step 17: cloudinary.uploader.destroy(publicId, { resource_type: 'auto' })
-    // So 'auto' might work, but usually providing 'video' is safer for videos.
-    // However, the function in Step 17 takes only 'publicId'. 'resource_type: auto' is hardcoded.
+    if (video.videoFile.publicId) {
+      await deleteFromCloudinary(video.videoFile.publicId, 'video');
+    } else if (typeof video.videoFile === 'string') {
+      const publicId = video.videoFile.split('/').pop().split('.')[0];
+      await deleteFromCloudinary(publicId, 'video');
+    }
   }
 
   if (video.thumbnail) {
-    const thumbnailPublicId = video.thumbnail.split('/').pop().split('.')[0];
-    await deleteFromCloudinary(thumbnailPublicId);
+    if (video.thumbnail.publicId) {
+      await deleteFromCloudinary(video.thumbnail.publicId);
+    } else if (typeof video.thumbnail === 'string') {
+      const publicId = video.thumbnail.split('/').pop().split('.')[0];
+      await deleteFromCloudinary(publicId);
+    }
   }
 
   await Video.findByIdAndDelete(videoId);

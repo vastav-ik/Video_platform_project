@@ -14,8 +14,14 @@ const userSchema = new Schema(
     ],
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
-    avatar: { type: String }, // profile image
-    coverImage: { type: String },
+    avatar: {
+      url: String,
+      publicId: String,
+    },
+    coverImage: {
+      url: String,
+      publicId: String,
+    },
     bio: { type: String, maxlength: 200 },
 
     subscribersCount: { type: Number, default: 0 },

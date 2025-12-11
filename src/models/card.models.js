@@ -8,8 +8,14 @@ const cardSchema = new mongoose.Schema(
       required: true,
     },
     content: { type: String, maxlength: 500 },
-    image: { type: String }, // optional media
-    video: { type: String }, // optional media
+    image: {
+      url: String,
+      publicId: String,
+    },
+    video: {
+      url: String,
+      publicId: String,
+    },
 
     likesCount: { type: Number, default: 0 },
     commentsCount: { type: Number, default: 0 },

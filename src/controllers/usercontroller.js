@@ -79,7 +79,6 @@ const loginUser = asyncHandler(async (req, res) => {
 const registerUser = asyncHandler(async (req, res) => {
   const { username, fullName, email, password } = req.body;
 
-  // Validation
   if (!username || !fullName || !email || !password) {
     throw new ApiError(400, 'All fields are required');
   }
@@ -119,7 +118,6 @@ const registerUser = asyncHandler(async (req, res) => {
   }
 
   try {
-    // Logging data before creation
     console.log({
       username: username.toLowerCase(),
       fullName,
@@ -133,8 +131,16 @@ const registerUser = asyncHandler(async (req, res) => {
       fullName,
       email,
       password,
-      avatar: avatar.url,
-      coverImage: coverImage ? coverImage.url : undefined,
+      avatar: {
+        url: avatar.url,
+        publicId: avatar.public_id,
+      },
+      coverImage: coverImage
+        ? {
+            url: coverImage.url,
+            publicId: coverImage.public_id,
+          }
+        : undefined,
     });
 
     const createdUser = await User.findById(newUser._id).select(
@@ -290,11 +296,23 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
   if (!avatar || !avatar.url) {
     throw new ApiError(500, 'Error uploading avatar to cloudinary');
   }
+
+  if (user.avatar && user.avatar.publicId) {
+    await deleteFromCloudinary(user.avatar.publicId);
+  } else if (user.avatar && typeof user.avatar === 'string') {
+    // fallback
+    const publicId = user.avatar.split('/').pop().split('.')[0];
+    await deleteFromCloudinary(publicId);
+  }
+
   const updatedUser = await User.findByIdAndUpdate(
     user._id,
     {
       $set: {
-        avatar: avatar.url,
+        avatar: {
+          url: avatar.url,
+          publicId: avatar.public_id,
+        },
       },
     },
     { new: true }
@@ -318,11 +336,22 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
     throw new ApiError(500, 'Error uploading cover image to cloudinary');
   }
 
+  if (user.coverImage && user.coverImage.publicId) {
+    await deleteFromCloudinary(user.coverImage.publicId);
+  } else if (user.coverImage && typeof user.coverImage === 'string') {
+    // fallback
+    const publicId = user.coverImage.split('/').pop().split('.')[0];
+    await deleteFromCloudinary(publicId);
+  }
+
   const updatedUser = await User.findByIdAndUpdate(
     user._id,
     {
       $set: {
-        coverImage: coverImage.url,
+        coverImage: {
+          url: coverImage.url,
+          publicId: coverImage.public_id,
+        },
       },
     },
     { new: true }

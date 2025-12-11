@@ -11,8 +11,14 @@ const videoSchema = new Schema(
     },
     title: { type: String, required: true },
     description: { type: String },
-    videoFile: { type: String, required: true },
-    thumbnail: { type: String },
+    videoFile: {
+      url: { type: String, required: true },
+      publicId: { type: String, required: true },
+    },
+    thumbnail: {
+      url: { type: String, required: true },
+      publicId: { type: String, required: true },
+    },
 
     duration: { type: Number },
     views: { type: Number, default: 0 },
