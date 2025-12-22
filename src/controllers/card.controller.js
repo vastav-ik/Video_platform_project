@@ -16,7 +16,6 @@ const createCard = asyncHandler(async (req, res) => {
     throw new ApiError(400, 'Content is required');
   }
 
-  // Handle file uploads (image or video)
   const imageLocalPath = req.files?.image?.[0]?.path;
   const videoLocalPath = req.files?.video?.[0]?.path;
 
@@ -185,7 +184,6 @@ const deleteCard = asyncHandler(async (req, res) => {
     throw new ApiError(403, 'You are not authorized to delete this card');
   }
 
-  // Delete assets from Cloudinary
   if (card.image) {
     const publicId = card.image.split('/').pop().split('.')[0];
     await deleteFromCloudinary(publicId);

@@ -11,11 +11,9 @@ import { upload } from '../middlewares/multer.middleware.js';
 
 const router = Router();
 
-// Public routes
 router.route('/user/:userId').get(getUserCards);
 router.route('/:cardId').get(getCardById);
 
-// Protected routes
 router.route('/').post(
   verifyJWT,
   upload.fields([

@@ -12,7 +12,6 @@ const toggleSubscription = asyncHandler(async (req, res) => {
     throw new ApiError(400, 'Invalid Channel ID');
   }
 
-  // Prevent subscribing to self
   if (channelId.toString() === req.user?._id.toString()) {
     throw new ApiError(400, 'You cannot subscribe to yourself');
   }
@@ -25,7 +24,6 @@ const toggleSubscription = asyncHandler(async (req, res) => {
   if (isSubscribed) {
     await Subscription.findByIdAndDelete(isSubscribed?._id);
 
-    // Update counts
     await User.findByIdAndUpdate(channelId, { $inc: { subscribersCount: -1 } });
     await User.findByIdAndUpdate(req.user?._id, {
       $inc: { subscribedToCount: -1 },
@@ -47,7 +45,6 @@ const toggleSubscription = asyncHandler(async (req, res) => {
     subscribedTo: channelId,
   });
 
-  // Update counts
   await User.findByIdAndUpdate(channelId, { $inc: { subscribersCount: 1 } });
   await User.findByIdAndUpdate(req.user?._id, {
     $inc: { subscribedToCount: 1 },
@@ -60,7 +57,6 @@ const toggleSubscription = asyncHandler(async (req, res) => {
     );
 });
 
-// controller to return subscriber list of a channel
 const getUserChannelSubscribers = asyncHandler(async (req, res) => {
   const { channelId } = req.params;
 
@@ -111,7 +107,6 @@ const getUserChannelSubscribers = asyncHandler(async (req, res) => {
     );
 });
 
-// controller to return channel list to which user has subscribed
 const getSubscribedChannels = asyncHandler(async (req, res) => {
   const { subscriberId } = req.params;
 

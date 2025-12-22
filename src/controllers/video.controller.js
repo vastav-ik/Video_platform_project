@@ -147,18 +147,7 @@ const getVideoById = asyncHandler(async (req, res) => {
       $addFields: {
         owner: { $first: '$owner' },
         isLiked: {
-          $cond: {
-            // We still need to check if *current user* liked it, so we need a check.
-            // But we don't need to count ALL likes.
-            // Wait, how do we check if *current user* liked it without lookup?
-            // We can do a lookup with pipeline that matches ONLY current user.
-            // That is much cheaper than looking up ALL likes.
-            // But wait, the previous code lookup entire 'likes' array?
-            // "from: 'likes', localField: '_id', foreignField: 'video', as: 'likes'"
-            // Yes, that pulls ALL likes for the video. If a video has 1M likes, that's bad.
-            //
-            // Optimization: lookup ONLY where 'likedBy' == req.user._id
-          },
+          $cond: {},
         },
       },
     },
@@ -282,7 +271,6 @@ const deleteVideo = asyncHandler(async (req, res) => {
     throw new ApiError(403, 'You are not authorized to delete this video');
   }
 
-  // Delete assets from Cloudinary
   if (video.videoFile) {
     if (video.videoFile.publicId) {
       await deleteFromCloudinary(video.videoFile.publicId, 'video');

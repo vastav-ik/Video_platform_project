@@ -271,7 +271,7 @@ const updateUserDetails = asyncHandler(async (req, res) => {
     const updatedUser = await User.findByIdAndUpdate(
       user._id,
       { $set: updateFields },
-      { new: true } // Return the updated document
+      { new: true }
     ).select('-password -refreshToken');
 
     return res
@@ -300,7 +300,6 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
   if (user.avatar && user.avatar.publicId) {
     await deleteFromCloudinary(user.avatar.publicId);
   } else if (user.avatar && typeof user.avatar === 'string') {
-    // fallback
     const publicId = user.avatar.split('/').pop().split('.')[0];
     await deleteFromCloudinary(publicId);
   }
@@ -339,7 +338,6 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
   if (user.coverImage && user.coverImage.publicId) {
     await deleteFromCloudinary(user.coverImage.publicId);
   } else if (user.coverImage && typeof user.coverImage === 'string') {
-    // fallback
     const publicId = user.coverImage.split('/').pop().split('.')[0];
     await deleteFromCloudinary(publicId);
   }

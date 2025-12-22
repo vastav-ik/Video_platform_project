@@ -17,8 +17,7 @@ const routerPublic = Router();
 router.route('/user/:userId').get(getUserPlaylists);
 router.route('/:playlistId').get(getPlaylistById);
 
-// Protected
-router.use(verifyJWT); // Apply to all subsequent routes (create, update, delete)
+router.use(verifyJWT);
 
 router.route('/').post(createPlaylist);
 router.route('/:playlistId').patch(updatePlaylist).delete(deletePlaylist);

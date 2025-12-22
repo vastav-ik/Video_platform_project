@@ -2,8 +2,7 @@ node_modules/
 dist/
 
 .env
+test_registration.js
 
 
-
-# GIT
 .git/
