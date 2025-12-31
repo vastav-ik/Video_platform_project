@@ -26,18 +26,32 @@ A video sharing platform backend.
     - Copy `.env.example` to `.env`
     - Update the values in `.env` with your credentials
 
-## Running the Server
+## Running the Application
 
-- **Development Mode**:
+### Backend
 
-  ```bash
-  npm run dev
-  ```
+1.  Navigate to root directory.
+2.  Run development server:
+    ```bash
+    npm run dev
+    ```
+    Server runs on `http://localhost:3000`.
 
-- **Production Mode**:
-  ```bash
-  npm start
-  ```
+### Frontend
+
+1.  Navigate to `frontend` directory:
+    ```bash
+    cd frontend
+    ```
+2.  Install dependencies:
+    ```bash
+    npm install
+    ```
+3.  Run development server:
+    ```bash
+    npm run dev
+    ```
+    Frontend runs on `http://localhost:5173`.
 
 ## API Endpoints
 

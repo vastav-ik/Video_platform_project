@@ -201,4 +201,52 @@ const deleteCard = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, {}, 'Card deleted successfully'));
 });
 
-export { createCard, getUserCards, getCardById, updateCard, deleteCard };
+const getAllCards = asyncHandler(async (req, res) => {
+  const { page = 1, limit = 20 } = req.query;
+
+  const cardAggregate = Card.aggregate([
+    {
+      $lookup: {
+        from: 'users',
+        localField: 'author',
+        foreignField: '_id',
+        as: 'author',
+        pipeline: [
+          {
+            $project: {
+              username: 1,
+              avatar: 1,
+            },
+          },
+        ],
+      },
+    },
+    {
+      $addFields: {
+        author: { $first: '$author' },
+      },
+    },
+    {
+      $sort: { createdAt: -1 },
+    },
+  ]);
+
+  Card.aggregatePaginate(cardAggregate, { page, limit })
+    .then(result => {
+      return res
+        .status(200)
+        .json(new ApiResponse(200, result, 'All cards fetched successfully'));
+    })
+    .catch(err => {
+      throw new ApiError(500, 'Failed to fetch cards');
+    });
+});
+
+export {
+  createCard,
+  getUserCards,
+  getCardById,
+  updateCard,
+  deleteCard,
+  getAllCards,
+};

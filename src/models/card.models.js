@@ -1,5 +1,7 @@
 import { Schema } from 'mongoose';
 import mongoose from 'mongoose';
+import aggregatePaginate from 'mongoose-aggregate-paginate-v2';
+
 const cardSchema = new mongoose.Schema(
   {
     author: {
@@ -23,5 +25,7 @@ const cardSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+cardSchema.plugin(aggregatePaginate);
 
 export const Card = mongoose.model('Card', cardSchema);
