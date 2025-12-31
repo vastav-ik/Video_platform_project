@@ -1,6 +1,11 @@
 import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 app.use(
@@ -35,22 +40,9 @@ app.use('/api/v1/playlists', playlistRouter);
 app.use('/api/v1/cards', cardRouter);
 app.use('/api/v1/dashboard', dashboardRouter);
 
-// Start of Frontend Static Serving
-import path from 'path';
-import { fileURLToPath } from 'url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-console.log('Static files path:', path.join(__dirname, '../frontend/dist'));
-
 app.use(express.static(path.join(__dirname, '../frontend/dist')));
-app.use(
-  '/assets',
-  express.static(path.join(__dirname, '../frontend/dist/assets'))
-);
 
-app.get('*', (req, res) => {
+app.get(/./, (req, res) => {
   res.sendFile(path.join(__dirname, '../frontend/dist', 'index.html'));
 });
 

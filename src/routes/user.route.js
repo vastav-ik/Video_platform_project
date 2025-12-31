@@ -9,8 +9,12 @@ import {
   updateUserAvatar,
   updateUserCoverImage,
   updateUserPassword,
+  getUserChannelProfile,
 } from '../controllers/usercontroller.js';
-import { verifyJWT } from '../middlewares/auth.middleware.js';
+import {
+  verifyJWT,
+  optionalVerifyJWT,
+} from '../middlewares/auth.middleware.js';
 import { upload } from '../middlewares/multer.middleware.js';
 
 const router = Router();
@@ -34,8 +38,11 @@ router.route('/change-password').patch(verifyJWT, updateUserPassword);
 router
   .route('/update-avatar')
   .patch(verifyJWT, upload.single('avatar'), updateUserAvatar);
+
 router
   .route('/update-cover-image')
   .patch(verifyJWT, upload.single('coverImage'), updateUserCoverImage);
+
+router.route('/c/:username').get(optionalVerifyJWT, getUserChannelProfile);
 
 export default router;

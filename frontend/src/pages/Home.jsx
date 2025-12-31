@@ -1,77 +1,71 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import axios from 'axios';
-import { Button } from '@/components/ui/button';
+import VideoCard from '@/components/VideoCard';
+import { Skeleton } from '@/components/ui/skeleton';
 
 function Home() {
   const [videos, setVideos] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [searchParams] = useSearchParams();
+  const query = searchParams.get('query');
 
   useEffect(() => {
     const fetchVideos = async () => {
+      setLoading(true);
       try {
         const response = await axios.get(
-          `${import.meta.env.VITE_API_BASE_URL}/videos`
+          `${import.meta.env.VITE_API_BASE_URL}/videos`,
+          {
+            params: {
+              query: query || undefined,
+              page: 1,
+              limit: 12,
+            },
+          }
         );
-        // aggregatePaginate returns { docs: [], ... }
-        // Our ApiResponse wraps it in data: { ... }
-        // So response.data.data.docs ?
-        console.log('Fetched videos:', response.data);
         setVideos(response.data.data?.docs || response.data.data || []);
       } catch (error) {
-        console.error('Error fetching videos', error);
       } finally {
         setLoading(false);
       }
     };
 
     fetchVideos();
-  }, []);
-
-  if (loading) {
-    return <div className="p-8 text-center">Loading...</div>;
-  }
+  }, [query]);
 
   return (
     <div className="container py-8">
-      <h1 className="mb-8 text-3xl font-bold">Recommended</h1>
-      {videos.length === 0 ? (
-        <p>No videos found.</p>
-      ) : (
+      <h1 className="mb-8 text-3xl font-heading font-bold">
+        {query ? `Search results for "${query}"` : 'Recommended'}
+      </h1>
+
+      {loading ? (
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {videos.map(video => (
-            <div
-              key={video._id}
-              className="overflow-hidden rounded-lg border bg-card text-card-foreground group"
-            >
-              <div className="relative aspect-video bg-muted">
-                {video.thumbnail?.url && (
-                  <img
-                    src={video.thumbnail.url}
-                    alt={video.title}
-                    className="h-full w-full object-cover transition-all hover:scale-105"
-                  />
-                )}
-              </div>
-              <div className="p-4">
-                <h3 className="line-clamp-2 text-lg font-semibold leading-tight tracking-tight">
-                  {video.title}
-                </h3>
-                <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">
-                  {video.description}
-                </p>
-                <div className="mt-4 flex items-center justify-between">
-                  <div className="text-xs text-muted-foreground">
-                    {video.views} views
-                  </div>
-                  <Link to={`/videos/${video._id}`}>
-                    <Button variant="secondary" size="sm">
-                      Watch
-                    </Button>
-                  </Link>
+          {Array.from({ length: 8 }).map((_, i) => (
+            <div key={i} className="flex flex-col gap-3">
+              <Skeleton className="aspect-video w-full" />
+              <div className="flex gap-3">
+                <Skeleton className="h-10 w-10 rounded-full shrink-0" />
+                <div className="flex-1 space-y-2">
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-3/4" />
+                  <Skeleton className="h-3 w-1/2" />
                 </div>
               </div>
             </div>
+          ))}
+        </div>
+      ) : videos.length === 0 ? (
+        <div className="text-center py-12">
+          <p className="text-muted-foreground text-lg">
+            {query ? `No videos found for "${query}"` : 'No videos available'}
+          </p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {videos.map(video => (
+            <VideoCard key={video._id} video={video} />
           ))}
         </div>
       )}

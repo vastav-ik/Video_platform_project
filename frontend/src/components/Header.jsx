@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from './ui/button';
-import { Video, LogOut } from 'lucide-react';
+import { Input } from './ui/input';
+import { Video, LogOut, Search } from 'lucide-react';
 import axios from 'axios';
 
 function Header() {
   const [user, setUser] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -18,6 +20,13 @@ function Header() {
     window.addEventListener('storage', checkUser);
     return () => window.removeEventListener('storage', checkUser);
   }, []);
+
+  const handleSearch = e => {
+    e.preventDefault();
+    if (searchTerm.trim()) {
+      navigate(`/?query=${encodeURIComponent(searchTerm.trim())}`);
+    }
+  };
 
   const handleLogout = async () => {
     try {
@@ -54,6 +63,21 @@ function Header() {
             Vidtube
           </span>
         </Link>
+
+        {/* Search Bar */}
+        <form
+          onSubmit={handleSearch}
+          className="hidden md:flex flex-1 max-w-md mx-6 relative"
+        >
+          <Input
+            type="text"
+            placeholder="Search videos..."
+            className="w-full pl-10 bg-white/50 border-white/20 focus:bg-white transition-all rounded-xl"
+            value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)}
+          />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        </form>
 
         <div className="flex items-center space-x-6">
           <nav className="hidden md:flex items-center space-x-6">

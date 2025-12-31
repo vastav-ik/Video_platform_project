@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { toast } from '@/lib/toast';
 
 function Login() {
   const [formData, setFormData] = useState({
@@ -33,6 +34,7 @@ function Login() {
       );
       localStorage.setItem('accessToken', response.data.data.accessToken);
       localStorage.setItem('user', JSON.stringify(response.data.data.user));
+      toast.success('Login successful!');
       navigate('/');
     } catch (err) {
       setError(err.response?.data?.message || 'Login failed');

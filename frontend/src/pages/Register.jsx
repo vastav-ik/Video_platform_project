@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { toast } from '@/lib/toast';
 
 function Register() {
   const [formData, setFormData] = useState({
@@ -15,21 +16,12 @@ function Register() {
   });
   const [error, setError] = useState('');
   const navigate = useNavigate();
-
   useEffect(() => {
     const token = localStorage.getItem('accessToken');
     if (token) {
       navigate('/');
     }
   }, [navigate]);
-
-  useEffect(() => {
-    const token = localStorage.getItem('accessToken');
-    if (token) {
-      navigate('/');
-    }
-  }, [navigate]);
-
   const handleChange = e => {
     if (e.target.files) {
       setFormData({ ...formData, [e.target.name]: e.target.files[0] });
@@ -55,6 +47,7 @@ function Register() {
           headers: { 'Content-Type': 'multipart/form-data' },
         }
       );
+      toast.success('Registration successful! Please login.');
       navigate('/login');
     } catch (err) {
       setError(err.response?.data?.message || 'Registration failed');

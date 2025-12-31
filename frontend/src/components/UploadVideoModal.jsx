@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { toast } from '@/lib/toast';
 
 export function UploadVideoModal() {
   const [open, setOpen] = useState(false);
@@ -57,12 +58,11 @@ export function UploadVideoModal() {
         }
       );
 
-      console.log('Upload success:', response.data);
+      toast.success('Video uploaded successfully!');
       setOpen(false);
       // Ideally trigger a refresh in parent, but for now just close
       window.location.reload(); // Simple refresh to show new video
     } catch (err) {
-      console.error('Upload Error', err);
       setError(err.response?.data?.message || 'Upload failed');
     } finally {
       setLoading(false);

@@ -20,8 +20,8 @@ const configureCloudinary = () => {
     cloud_name: process.env.CLOUD_NAME,
     api_key: process.env.CLOUD_API_KEY,
     api_secret: process.env.CLOUD_API_SECRET,
+    secure: true,
   });
-  console.log('Cloudinary configured successfully.');
 };
 
 const uploadOnCloudinary = async filePath => {
@@ -30,7 +30,6 @@ const uploadOnCloudinary = async filePath => {
     const response = await cloudinary.uploader.upload(filePath, {
       resource_type: 'auto',
     });
-    console.log(response.url);
     fs.unlinkSync(filePath);
     return response;
   } catch (error) {

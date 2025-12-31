@@ -25,7 +25,6 @@ function Cards() {
       );
       setCards(response.data.data?.docs || response.data.data || []);
     } catch (error) {
-      console.error('Error fetching cards', error);
     } finally {
       setLoading(false);
     }
@@ -44,9 +43,7 @@ function Cards() {
         subs.map(sub => sub.channel?._id || sub.channel)
       );
       setSubscribedChannels(channelIds);
-    } catch (error) {
-      console.error('Error fetching subscriptions', error);
-    }
+    } catch (error) {}
   };
 
   useEffect(() => {
@@ -75,7 +72,6 @@ function Cards() {
       setContent('');
       fetchCards();
     } catch (error) {
-      console.error('Error posting card', error);
       alert('Failed to post');
     }
   };

@@ -13,35 +13,42 @@ import aggregatePaginate from 'mongoose-aggregate-paginate-v2';
 const getAllVideos = asyncHandler(async (req, res) => {
   const { page = 1, limit = 10, query, sortBy, sortType, userId } = req.query;
 
-  const pipelineyb = [];
+  const pipeline = [];
 
   if (query) {
-    pipelineyb.push({
+    pipeline.push({
       $match: {
-        $text: { $search: query },
+        $text: {
+          $search: query,
+        },
       },
     });
   }
+
   if (userId) {
-    if (!isValidObjectId(userId)) throw new ApiError(400, 'Invalid User Id');
-    pipelineyb.push({
+    if (!isValidObjectId(userId)) {
+      throw new ApiError(400, 'Invalid User ID');
+    }
+    pipeline.push({
       $match: {
         owner: new mongoose.Types.ObjectId(userId),
       },
     });
   }
-  pipelineyb.push({ $match: { isPublished: true } });
+
+  pipeline.push({ $match: { isPublished: true } });
 
   if (sortBy && sortType) {
-    pipelineyb.push({
+    pipeline.push({
       $sort: {
         [sortBy]: sortType === 'asc' ? 1 : -1,
       },
     });
   } else {
-    pipelineyb.push({ $sort: { createdAt: -1 } });
+    pipeline.push({ $sort: { createdAt: -1 } });
   }
-  pipelineyb.push({
+
+  pipeline.push({
     $lookup: {
       from: 'users',
       localField: 'owner',
@@ -50,9 +57,12 @@ const getAllVideos = asyncHandler(async (req, res) => {
       pipeline: [{ $project: { username: 1, avatar: 1 } }],
     },
   });
-  pipelineyb.push({ $unwind: '$ownerDetails' });
+
+  pipeline.push({
+    $unwind: '$ownerDetails',
+  });
   mongoose.plugin(aggregatePaginate);
-  const videoAggregate = Video.aggregate(pipelineyb);
+  const videoAggregate = Video.aggregate(pipeline);
   const options = {
     page: parseInt(page, 10),
     limit: parseInt(limit, 10),
@@ -146,9 +156,6 @@ const getVideoById = asyncHandler(async (req, res) => {
     {
       $addFields: {
         owner: { $first: '$owner' },
-        isLiked: {
-          $cond: {},
-        },
       },
     },
     {
@@ -160,7 +167,9 @@ const getVideoById = asyncHandler(async (req, res) => {
         pipeline: [
           {
             $match: {
-              likedBy: new mongoose.Types.ObjectId(req.user?._id),
+              likedBy: req.user?._id
+                ? new mongoose.Types.ObjectId(req.user._id)
+                : null,
             },
           },
         ],
