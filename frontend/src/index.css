@@ -10,75 +10,36 @@
 
 @layer base {
   :root {
-    /* Base Colors - Warm Paper / Soft Charcoal */
-    --background: 30 20% 98%; /* Warm off-white */
-    --foreground: 215 25% 27%; /* Soft charcoal */
+    /* New Color Palette */
+    --background: 199 75% 9%; /* #061E29 */
+    --foreground: 180 8% 96%; /* #F3F4F4 */
 
-    /* UI Elements */
-    --card: 30 20% 98%;
-    --card-foreground: 215 25% 27%;
+    --card: 199 75% 12%;
+    --card-foreground: 180 8% 96%;
 
-    --popover: 30 20% 98%;
-    --popover-foreground: 215 25% 27%;
+    --popover: 199 75% 10%;
+    --popover-foreground: 180 8% 96%;
 
-    /* Primary - Slate Blue or a warm accent */
-    --primary: 215 25% 27%;
-    --primary-foreground: 30 20% 98%;
+    --primary: 198 58% 27%; /* #1D546D */
+    --primary-foreground: 180 8% 96%;
 
-    /* Secondary - Soft Beige/Gray */
-    --secondary: 30 10% 94%;
-    --secondary-foreground: 215 25% 27%;
+    --secondary: 182 24% 20%;
+    --secondary-foreground: 180 8% 96%;
 
-    /* Muted */
-    --muted: 30 10% 94%;
-    --muted-foreground: 215 15% 50%;
+    --muted: 199 50% 15%;
+    --muted-foreground: 182 10% 70%;
 
-    /* Accent */
-    --accent: 30 15% 92%;
-    --accent-foreground: 215 25% 27%;
+    --accent: 182 24% 48%; /* #5F9598 */
+    --accent-foreground: 199 75% 9%;
 
-    /* Destructive */
-    --destructive: 0 70% 60%;
-    --destructive-foreground: 30 20% 98%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 180 8% 96%;
 
-    /* Borders & Inputs */
-    --border: 215 15% 90%;
-    --input: 215 15% 90%;
-    --ring: 215 25% 27%;
+    --border: 198 58% 20%;
+    --input: 198 58% 20%;
+    --ring: 182 24% 48%;
 
-    /* Radius - Friendlier rounded corners */
-    --radius: 1rem;
-  }
-
-  .dark {
-    /* Dark Mode - Deep Slate / Warm White */
-    --background: 215 25% 10%;
-    --foreground: 30 20% 94%;
-
-    --card: 215 25% 12%;
-    --card-foreground: 30 20% 94%;
-
-    --popover: 215 25% 12%;
-    --popover-foreground: 30 20% 94%;
-
-    --primary: 30 20% 94%;
-    --primary-foreground: 215 25% 10%;
-
-    --secondary: 215 20% 18%;
-    --secondary-foreground: 30 20% 94%;
-
-    --muted: 215 20% 18%;
-    --muted-foreground: 215 15% 65%;
-
-    --accent: 215 20% 18%;
-    --accent-foreground: 30 20% 94%;
-
-    --destructive: 0 60% 30%;
-    --destructive-foreground: 30 20% 94%;
-
-    --border: 215 20% 18%;
-    --input: 215 20% 18%;
-    --ring: 215 15% 70%;
+    --radius: 0.75rem;
   }
 }
 

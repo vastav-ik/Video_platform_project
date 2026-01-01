@@ -46,7 +46,6 @@ const optionalVerifyJWT = asyncHandler(async (req, res, next) => {
     }
     next();
   } catch (error) {
-    // If token is invalid, just proceed as guest
     next();
   }
 });

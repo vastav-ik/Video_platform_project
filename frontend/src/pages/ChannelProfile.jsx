@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import axios from 'axios';
 import { Button } from '@/components/ui/button';
-import { List } from 'lucide-react';
+import { List, Search } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 function ChannelProfile() {
@@ -73,119 +73,113 @@ function ChannelProfile() {
   if (!profile) return <div className="p-8 text-center">Channel not found</div>;
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <div className="h-48 md:h-64 w-full bg-muted relative overflow-hidden">
+    <div className="min-h-screen bg-background">
+      <div className="relative h-48 w-full overflow-hidden bg-primary/20 md:h-80">
         {profile.coverImage?.url ? (
           <img
             src={profile.coverImage.url}
             alt="Cover"
-            className="w-full h-full object-cover"
+            className="h-full w-full object-cover transition-transform duration-700 hover:scale-105"
           />
         ) : (
-          <div className="w-full h-full bg-gradient-to-r from-primary/20 to-primary/5 flex items-center justify-center text-muted-foreground">
-            No Cover Image
+          <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary/30 to-background text-muted-foreground">
+            <div className="text-center">
+              <div className="inline-block rounded-full bg-primary/20 p-4 mb-2">
+                <Search className="h-8 w-8 opacity-20" />
+              </div>
+              <p className="text-xs font-bold uppercase tracking-widest opacity-50">
+                No Cover Image
+              </p>
+            </div>
           </div>
         )}
+        <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent" />
       </div>
 
-      <div className="container mx-auto px-4 py-6">
-        <div className="flex flex-col md:flex-row items-center md:items-start gap-6 -mt-12 md:-mt-16 relative z-10">
-          <div className="h-32 w-32 rounded-full border-4 border-background bg-muted overflow-hidden shrink-0 shadow-lg">
+      <div className="mx-auto max-w-7xl px-4 py-6 md:px-8">
+        <div className="relative z-10 -mt-20 flex flex-col items-center gap-6 md:-mt-24 md:flex-row md:items-start">
+          <div className="h-32 w-32 shrink-0 overflow-hidden rounded-full border-4 border-background bg-card shadow-2xl transition-transform hover:scale-105 md:h-40 md:w-40">
             {profile.avatar?.url ? (
               <img
                 src={profile.avatar.url}
                 alt={profile.username}
-                className="w-full h-full object-cover"
+                className="h-full w-full object-cover"
               />
             ) : (
-              <div className="w-full h-full flex items-center justify-center bg-gray-200 text-gray-500 text-2xl font-bold">
+              <div className="flex h-full w-full items-center justify-center bg-primary text-3xl font-bold text-foreground">
                 {profile.username[0]?.toUpperCase()}
               </div>
             )}
           </div>
 
-          <div className="flex-1 text-center md:text-left mt-2 md:mt-12">
-            <h1 className="text-3xl font-bold font-heading">
+          <div className="flex-1 text-center mt-4 md:mt-24 md:text-left">
+            <h1 className="font-heading text-3xl font-bold tracking-tight text-foreground md:text-4xl">
               {profile.fullName}
             </h1>
-            <p className="text-muted-foreground">
-              @{profile.username} • {subscribersCount} subscribers •{' '}
-              {profile.channelsSubscribedToCount || 0} subscribed
-            </p>
+            <div className="mt-2 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-sm text-muted-foreground md:justify-start font-medium">
+              <span className="text-accent font-bold">@{profile.username}</span>
+              <span className="opacity-40">•</span>
+              <span>{subscribersCount.toLocaleString()} subscribers</span>
+              <span className="opacity-40">•</span>
+              <span>{profile.channelsSubscribedToCount || 0} subscribed</span>
+            </div>
           </div>
 
-          <div className="mt-4 md:mt-12">
+          <div className="mt-6 md:mt-24">
             <Button
               onClick={handleSubscribe}
-              variant={isSubscribed ? 'secondary' : 'default'}
-              className="rounded-full px-6"
+              className={`rounded-full px-8 py-6 font-bold shadow-lg transition-all hover:scale-105 active:scale-95 ${
+                isSubscribed
+                  ? 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
+                  : 'bg-foreground text-background hover:bg-foreground/90'
+              }`}
             >
               {isSubscribed ? 'Subscribed' : 'Subscribe'}
             </Button>
           </div>
         </div>
 
-        <div className="mt-8">
-          <div className="border-b border-border">
-            <div className="flex gap-4">
+        <div className="mt-12">
+          <div className="mb-8 flex items-center gap-6 border-b border-primary/20">
+            {[
+              { id: 'videos', label: 'Videos' },
+              { id: 'playlists', label: 'Playlists' },
+            ].map(tab => (
               <button
-                onClick={() => setActiveTab('videos')}
-                className={`pb-3 px-2 font-semibold transition-colors ${
-                  activeTab === 'videos'
-                    ? 'border-b-2 border-primary text-primary'
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`relative pb-4 text-sm font-bold uppercase tracking-widest transition-all ${
+                  activeTab === tab.id
+                    ? 'text-accent'
                     : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
-                Videos
+                {tab.label}
+                {activeTab === tab.id && (
+                  <div className="absolute bottom-0 left-0 h-1 w-full rounded-full bg-accent shadow-[0_0_10px_rgba(95,149,152,0.8)]" />
+                )}
               </button>
-              <button
-                onClick={() => setActiveTab('playlists')}
-                className={`pb-3 px-2 font-semibold transition-colors ${
-                  activeTab === 'playlists'
-                    ? 'border-b-2 border-primary text-primary'
-                    : 'text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                Playlists
-              </button>
-            </div>
+            ))}
           </div>
 
-          <div className="mt-6">
+          <div className="min-h-[400px]">
             {activeTab === 'videos' && (
               <>
                 {videos.length > 0 ? (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                  <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                     {videos.map(video => (
-                      <Link
-                        to={`/videos/${video._id}`}
+                      <VideoCard
                         key={video._id}
-                        className="group"
-                      >
-                        <div className="aspect-video bg-muted rounded-lg overflow-hidden relative">
-                          {video.thumbnail?.url && (
-                            <img
-                              src={video.thumbnail.url}
-                              alt={video.title}
-                              className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                            />
-                          )}
-                        </div>
-                        <div className="mt-3">
-                          <h3 className="font-semibold line-clamp-2 leading-tight group-hover:text-primary transition-colors">
-                            {video.title}
-                          </h3>
-                          <p className="text-xs text-muted-foreground mt-1">
-                            {video.views} views •{' '}
-                            {new Date(video.createdAt).toLocaleDateString()}
-                          </p>
-                        </div>
-                      </Link>
+                        video={{ ...video, owner: profile }}
+                      />
                     ))}
                   </div>
                 ) : (
-                  <div className="text-center py-12 text-muted-foreground">
-                    No videos available.
+                  <div className="flex flex-col items-center justify-center py-20 text-center opacity-50">
+                    <Video className="h-12 w-12 mb-4" />
+                    <p className="text-lg font-medium">
+                      No videos uploaded yet.
+                    </p>
                   </div>
                 )}
               </>
@@ -194,37 +188,48 @@ function ChannelProfile() {
             {activeTab === 'playlists' && (
               <>
                 {playlists.length > 0 ? (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                  <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                     {playlists.map(playlist => (
-                      <div
+                      <Link
                         key={playlist._id}
-                        className="group border rounded-lg p-4 hover:border-primary transition-colors"
+                        to={`/playlists/${playlist._id}`}
+                        className="group overflow-hidden rounded-xl border border-primary/30 bg-card transition-all hover:border-accent/40 hover:shadow-xl"
                       >
-                        <div className="aspect-video bg-muted rounded-md mb-3 flex items-center justify-center relative overflow-hidden">
+                        <div className="relative aspect-video bg-primary/10 flex items-center justify-center overflow-hidden">
                           {playlist.playlistThumbnail?.thumbnail?.url ? (
                             <img
                               src={playlist.playlistThumbnail.thumbnail.url}
-                              className="w-full h-full object-cover"
+                              alt={playlist.name}
+                              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
                             />
                           ) : (
-                            <List className="h-8 w-8 text-muted-foreground" />
+                            <div className="flex flex-col items-center text-muted-foreground/60">
+                              <List className="h-12 w-12 mb-2" />
+                            </div>
                           )}
-                          <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                            <p className="text-white font-bold">
-                              View Playlist
-                            </p>
+                          <div className="absolute inset-0 bg-background/40 backdrop-blur-[2px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300">
+                            <div className="rounded-full bg-accent p-3 text-accent-foreground shadow-lg transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
+                              <List className="h-6 w-6" />
+                            </div>
                           </div>
                         </div>
-                        <h3 className="font-bold">{playlist.name}</h3>
-                        <p className="text-xs text-muted-foreground line-clamp-2">
-                          {playlist.description}
-                        </p>
-                      </div>
+                        <div className="p-4">
+                          <h3 className="line-clamp-1 font-bold text-foreground group-hover:text-accent transition-colors">
+                            {playlist.name}
+                          </h3>
+                          <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
+                            {playlist.description}
+                          </p>
+                        </div>
+                      </Link>
                     ))}
                   </div>
                 ) : (
-                  <div className="text-center py-12 text-muted-foreground">
-                    No playlists created.
+                  <div className="flex flex-col items-center justify-center py-20 text-center opacity-50">
+                    <List className="h-12 w-12 mb-4" />
+                    <p className="text-lg font-medium">
+                      No playlists created yet.
+                    </p>
                   </div>
                 )}
               </>

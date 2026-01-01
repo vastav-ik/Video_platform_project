@@ -53,15 +53,14 @@ const getAllVideos = asyncHandler(async (req, res) => {
       from: 'users',
       localField: 'owner',
       foreignField: '_id',
-      as: 'ownerDetails',
+      as: 'owner',
       pipeline: [{ $project: { username: 1, avatar: 1 } }],
     },
   });
 
   pipeline.push({
-    $unwind: '$ownerDetails',
+    $unwind: '$owner',
   });
-  mongoose.plugin(aggregatePaginate);
   const videoAggregate = Video.aggregate(pipeline);
   const options = {
     page: parseInt(page, 10),

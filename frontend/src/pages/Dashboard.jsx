@@ -11,7 +11,7 @@ function Dashboard() {
     const fetchDashboardData = async () => {
       try {
         const token = localStorage.getItem('accessToken');
-        if (!token) return; // Redirect to login?
+        if (!token) return;
 
         const headers = { Authorization: `Bearer ${token}` };
 
@@ -38,92 +38,110 @@ function Dashboard() {
   if (loading) return <div className="p-8 text-center">Loading...</div>;
 
   return (
-    <div className="container py-8">
+    <div className="mx-auto max-w-7xl px-4 py-8 md:px-8">
       <div className="mb-8 flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Channel Dashboard</h1>
+        <h1 className="font-heading text-2xl font-bold tracking-tight text-foreground md:text-3xl">
+          Channel Dashboard
+        </h1>
         <UploadVideoModal />
       </div>
 
-      {/* Stats Cards */}
-      <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="rounded-xl border bg-card p-6 text-card-foreground">
-          <h3 className="text-sm font-medium text-muted-foreground">
-            Total Views
-          </h3>
-          <div className="mt-2 text-2xl font-bold">
-            {stats?.totalViews || 0}
+      <div className="mb-10 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {[
+          { label: 'Total Views', value: stats?.totalViews || 0 },
+          { label: 'Total Subscribers', value: stats?.totalSubscribers || 0 },
+          { label: 'Total Likes', value: stats?.totalLikes || 0 },
+          { label: 'Total Videos', value: stats?.totalVideos || 0 },
+        ].map((stat, i) => (
+          <div
+            key={i}
+            className="rounded-2xl border border-primary/30 bg-card p-6 shadow-sm transition-all hover:border-accent/30 hover:shadow-xl"
+          >
+            <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+              {stat.label}
+            </h3>
+            <div className="mt-3 text-3xl font-bold text-foreground">
+              {stat.value.toLocaleString()}
+            </div>
           </div>
-        </div>
-        <div className="rounded-lg border bg-card p-6 shadow-sm">
-          <h3 className="text-sm font-medium text-muted-foreground">
-            Total Subscribers
-          </h3>
-          <div className="mt-2 text-2xl font-bold">
-            {stats?.totalSubscribers || 0}
-          </div>
-        </div>
-        <div className="rounded-lg border bg-card p-6 shadow-sm">
-          <h3 className="text-sm font-medium text-muted-foreground">
-            Total Likes
-          </h3>
-          <div className="mt-2 text-2xl font-bold">
-            {stats?.totalLikes || 0}
-          </div>
-        </div>
-        <div className="rounded-lg border bg-card p-6 shadow-sm">
-          <h3 className="text-sm font-medium text-muted-foreground">
-            Total Videos
-          </h3>
-          <div className="mt-2 text-2xl font-bold">
-            {stats?.totalVideos || 0}
-          </div>
-        </div>
+        ))}
       </div>
 
-      {/* Videos List */}
-      <h2 className="mb-4 text-xl font-semibold">Your Videos</h2>
-      <div className="rounded-lg border bg-card text-card-foreground shadow-sm">
-        <div className="grid grid-cols-4 gap-4 border-b p-4 text-sm font-medium">
-          <div className="col-span-2">Video</div>
-          <div>Status</div>
-          <div>Date Uploaded</div>
+      <div className="rounded-2xl border border-primary/30 bg-card overflow-hidden shadow-xl">
+        <div className="flex items-center justify-between border-b border-primary/20 bg-primary/5 px-6 py-4">
+          <h2 className="text-lg font-bold text-foreground">Your Videos</h2>
+          <span className="text-xs font-medium text-muted-foreground uppercase tracking-widest">
+            {videos.length} Total
+          </span>
         </div>
-        {videos.length === 0 ? (
-          <div className="p-4 text-center text-sm text-muted-foreground">
-            No videos uploaded yet.
-          </div>
-        ) : (
-          videos.map(video => (
-            <div
-              key={video._id}
-              className="grid grid-cols-4 items-center gap-4 border-b p-4 text-sm last:border-0 hover:bg-muted/50 transition-colors"
-            >
-              <div className="col-span-2 flex items-center gap-3">
-                <div className="h-10 w-16 overflow-hidden rounded bg-muted">
-                  {video.videoFile?.url && (
-                    <img
-                      src={video.thumbnail?.url || video.videoFile.url}
-                      alt=""
-                      className="h-full w-full object-cover"
-                    />
-                  )}
-                </div>
-                <span className="font-medium">{video.title}</span>
-              </div>
-              <div>
-                <span
-                  className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${video.isPublished ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}
-                >
-                  {video.isPublished ? 'Published' : 'Draft'}
-                </span>
-              </div>
-              <div className="text-muted-foreground">
-                {video.createdAt?.day}/{video.createdAt?.month}/
-                {video.createdAt?.year}
-              </div>
-            </div>
-          ))
-        )}
+
+        <div className="overflow-x-auto">
+          <table className="w-full text-left">
+            <thead className="border-b border-primary/10 bg-primary/5 text-xs font-bold uppercase tracking-widest text-muted-foreground">
+              <tr>
+                <th className="px-6 py-4">Video</th>
+                <th className="px-6 py-4">Status</th>
+                <th className="px-6 py-4">Views</th>
+                <th className="px-6 py-4">Date Uploaded</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-primary/10">
+              {videos.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan="4"
+                    className="px-6 py-12 text-center text-sm text-muted-foreground italic"
+                  >
+                    No videos uploaded yet.
+                  </td>
+                </tr>
+              ) : (
+                videos.map(video => (
+                  <tr
+                    key={video._id}
+                    className="group hover:bg-primary/5 transition-colors"
+                  >
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-4">
+                        <div className="h-10 w-16 overflow-hidden rounded-md bg-primary/20 border border-primary/30">
+                          <img
+                            src={video.thumbnail?.url || video.videoFile.url}
+                            alt=""
+                            className="h-full w-full object-cover transition-transform group-hover:scale-110"
+                          />
+                        </div>
+                        <span className="font-bold text-foreground group-hover:text-accent transition-colors line-clamp-1">
+                          {video.title}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span
+                        className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
+                          video.isPublished
+                            ? 'bg-green-500/10 text-green-400 border border-green-500/20'
+                            : 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20'
+                        }`}
+                      >
+                        {video.isPublished ? 'Published' : 'Draft'}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-muted-foreground">
+                      {video.views?.toLocaleString() || 0}
+                    </td>
+                    <td className="px-6 py-4 text-xs text-muted-foreground font-medium">
+                      {new Date(video.createdAt).toLocaleDateString(undefined, {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric',
+                      })}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

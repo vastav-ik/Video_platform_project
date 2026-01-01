@@ -8,7 +8,7 @@ import { Avatar } from '@/components/Avatar';
 import Comment from '@/components/Comment';
 import VideoCard from '@/components/VideoCard';
 import { AddToPlaylistModal } from '@/components/AddToPlaylistModal';
-import { ThumbsUp, Share2 } from 'lucide-react';
+import { ThumbsUp, ThumbsDown, Share2 } from 'lucide-react';
 import { formatViews, formatTimeAgo } from '@/lib/time';
 import { toast } from '@/lib/toast';
 
@@ -181,86 +181,109 @@ function VideoPlayer() {
   }
 
   return (
-    <div className="container py-8">
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+    <div className="mx-auto max-w-7xl px-4 py-6 md:px-8">
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
         <div className="lg:col-span-2">
-          <div className="aspect-video w-full overflow-hidden rounded-xl bg-black">
-            {video.videoFile?.url && (
+          <div className="aspect-video w-full overflow-hidden rounded-2xl border border-primary/30 bg-primary/10 shadow-2xl">
+            {video.videoFile && (
               <video
-                src={video.videoFile.url}
+                key={videoId}
+                src={
+                  typeof video.videoFile === 'string'
+                    ? video.videoFile
+                    : video.videoFile.url
+                }
                 controls
                 autoPlay
+                playsInline
+                preload="auto"
                 className="h-full w-full"
-                poster={video.thumbnail?.url}
+                poster={
+                  typeof video.thumbnail === 'string'
+                    ? video.thumbnail
+                    : video.thumbnail?.url
+                }
               />
             )}
           </div>
 
-          <div className="mt-4">
-            <h1 className="text-2xl font-heading font-bold">{video.title}</h1>
-            <div className="mt-2 flex items-center justify-between text-sm text-muted-foreground">
-              <div>
-                {formatViews(video.views)} views •{' '}
-                {formatTimeAgo(video.createdAt)}
-              </div>
-              <div className="flex gap-2">
-                <Button
-                  variant={isLiked ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={handleLike}
-                  className="gap-2"
-                >
-                  <ThumbsUp
-                    className={`h-4 w-4 ${isLiked ? 'fill-current' : ''}`}
-                  />
-                  {likesCount}
-                </Button>
-                <Button variant="outline" size="sm" className="gap-2">
-                  <Share2 className="h-4 w-4" />
-                  Share
-                </Button>
-                <AddToPlaylistModal videoId={videoId} />
-              </div>
-            </div>
+          <div className="mt-6 space-y-4">
+            <h1 className="font-heading text-2xl font-bold tracking-tight text-foreground md:text-3xl">
+              {video.title}
+            </h1>
 
-            <div className="mt-4 flex items-center justify-between rounded-xl border p-4">
-              <div className="flex items-center gap-3">
-                <Link to={`/c/${video.owner?.username}`}>
+            <div className="flex flex-wrap items-center justify-between gap-4 border-b border-primary/20 pb-6">
+              <div className="flex items-center space-x-4">
+                <Link
+                  to={`/c/${video.owner?.username}`}
+                  className="h-12 w-12 shrink-0 overflow-hidden rounded-full border-2 border-primary/50 bg-primary/20 transition-transform hover:scale-105"
+                >
                   <Avatar
-                    src={video.owner?.avatar?.url}
-                    alt={video.owner?.username}
-                    size="lg"
-                    fallback={video.owner?.username?.charAt(0)}
+                    src={video.owner.avatar.url}
+                    alt={video.owner.username}
                   />
                 </Link>
-                <div>
+                <div className="flex flex-col">
                   <Link
                     to={`/c/${video.owner?.username}`}
-                    className="font-semibold hover:text-primary"
+                    className="font-heading text-lg font-semibold text-foreground hover:text-accent transition-colors"
                   >
-                    {video.owner?.username}
+                    {video.owner.username}
                   </Link>
                   <p className="text-sm text-muted-foreground">
-                    {video.owner?.subscribersCount || 0} subscribers
+                    {formatViews(video.owner.subscribersCount)} subscribers
                   </p>
                 </div>
+                <Button
+                  onClick={handleSubscribe}
+                  className="ml-4 rounded-full bg-foreground text-background transition-all hover:scale-105 hover:bg-foreground/90 active:scale-95 px-6"
+                >
+                  {isSubscribed ? 'Subscribed' : 'Subscribe'}
+                </Button>
               </div>
-              <Button
-                onClick={handleSubscribe}
-                variant={isSubscribed ? 'outline' : 'default'}
-                className="rounded-full px-6"
-              >
-                {isSubscribed ? 'Subscribed' : 'Subscribe'}
-              </Button>
+
+              <div className="flex items-center space-x-2">
+                <div className="flex items-center overflow-hidden rounded-full bg-primary/20 border border-primary/30 p-1">
+                  <button
+                    onClick={handleLike}
+                    className={`flex items-center space-x-2 px-4 py-1.5 transition-colors hover:bg-primary/30 ${
+                      isLiked ? 'text-accent' : 'text-foreground'
+                    }`}
+                  >
+                    <ThumbsUp
+                      className={`h-5 w-5 ${isLiked ? 'fill-current' : ''}`}
+                    />
+                    <span className="text-sm font-medium">
+                      {formatViews(likesCount)}
+                    </span>
+                  </button>
+                  <div className="h-6 w-[1px] bg-primary/30" />
+                  <button className="px-4 py-1.5 transition-colors hover:bg-primary/30 text-foreground">
+                    <ThumbsDown className="h-5 w-5" />
+                  </button>
+                </div>
+                <AddToPlaylistModal videoId={videoId} />
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  className="rounded-full bg-primary/20 border border-primary/30 hover:bg-primary/30"
+                >
+                  <Share2 className="mr-2 h-4 w-4" />
+                  Share
+                </Button>
+              </div>
             </div>
 
-            {video.description && (
-              <div className="mt-4 rounded-xl border p-4">
-                <p className="whitespace-pre-wrap text-sm">
-                  {video.description}
-                </p>
+            <div className="rounded-2xl bg-primary/10 p-4 border border-primary/20 transition-colors hover:bg-primary/15">
+              <div className="flex space-x-2 text-sm font-semibold text-foreground">
+                <span>{formatViews(video.views)} views</span>
+                <span>•</span>
+                <span>{formatTimeAgo(video.createdAt)}</span>
               </div>
-            )}
+              <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">
+                {video.description}
+              </p>
+            </div>
           </div>
 
           <div className="mt-8">

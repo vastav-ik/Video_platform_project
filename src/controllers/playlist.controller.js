@@ -73,11 +73,6 @@ const getUserPlaylists = asyncHandler(async (req, res) => {
       },
     },
     {
-      $project: {
-        videos: 0,
-      },
-    },
-    {
       $sort: { createdAt: -1 },
     },
   ]);

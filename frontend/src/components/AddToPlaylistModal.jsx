@@ -9,10 +9,9 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox'; // Need to create/import Checkbox?
-// Or just use native input type="checkbox" for simplicity or install Checkbox.
-// Let's use native for now to save time or basic styling.
+import { List, Plus, Check } from 'lucide-react';
 
 export function AddToPlaylistModal({ videoId }) {
   const [open, setOpen] = useState(false);
@@ -27,7 +26,7 @@ export function AddToPlaylistModal({ videoId }) {
       const user = JSON.parse(userStr);
 
       const response = await axios.get(
-        `${import.meta.env.VITE_API_BASE_URL}/playlist/user/${user._id}`
+        `${import.meta.env.VITE_API_BASE_URL}/playlists/user/${user._id}`
         // Auth header might affect visibility, but getting own playlists usually requires auth if private?
         // Let's verify routes. getUserPlaylists is public in route but usually we want "my" playlists.
         // If route is public, it returns public playlists.
@@ -50,7 +49,7 @@ export function AddToPlaylistModal({ videoId }) {
     try {
       const token = localStorage.getItem('accessToken');
       await axios.post(
-        `${import.meta.env.VITE_API_BASE_URL}/playlist`,
+        `${import.meta.env.VITE_API_BASE_URL}/playlists`,
         { name: newPlaylistName, description: '' },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -66,77 +65,103 @@ export function AddToPlaylistModal({ videoId }) {
       const token = localStorage.getItem('accessToken');
       if (isPresent) {
         await axios.patch(
-          `${import.meta.env.VITE_API_BASE_URL}/playlist/remove/${videoId}/${playlistId}`,
+          `${import.meta.env.VITE_API_BASE_URL}/playlists/remove/${videoId}/${playlistId}`,
           {},
           { headers: { Authorization: `Bearer ${token}` } }
         );
       } else {
         await axios.patch(
-          `${import.meta.env.VITE_API_BASE_URL}/playlist/add/${videoId}/${playlistId}`,
+          `${import.meta.env.VITE_API_BASE_URL}/playlists/add/${videoId}/${playlistId}`,
           {},
           { headers: { Authorization: `Bearer ${token}` } }
         );
       }
-      // Ideally refresh generic "isPresent" check.
-      // But API doesn't tell us if video is in playlist easily without fetching full playlist details.
-      // For MVP, we might just assume success.
-      alert(`Video ${isPresent ? 'removed from' : 'added to'} playlist`);
-    } catch (error) {
-      console.error('Error updating playlist', error);
-    }
+      fetchPlaylists(); // Refresh to update local state of which playlists have the video
+    } catch (error) {}
   };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="secondary" size="sm">
+        <Button variant="secondary" size="sm" className="rounded-xl">
           Save
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>Save to Playlist</DialogTitle>
+      <DialogContent className="sm:max-w-[400px] rounded-2xl border-primary/30 bg-card p-0 overflow-hidden shadow-2xl">
+        <DialogHeader className="p-6 pb-2">
+          <DialogTitle className="text-xl font-bold text-foreground">
+            Save to Playlist
+          </DialogTitle>
         </DialogHeader>
 
-        <div className="grid gap-4 py-4">
-          {playlists.map(pl => (
-            <div key={pl._id} className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                id={pl._id}
-                className="h-4 w-4 rounded border-gray-300"
-                onChange={e => toggleVideoInPlaylist(pl._id, !e.target.checked)}
-                // Logic is tricky here without knowing initial state.
-                // Simplification: Just allow "Add" (one way) or just "Click to add".
-                // Let's make it simple buttons for now.
-              />
-              <Label htmlFor={pl._id}>{pl.name}</Label>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="ml-auto text-xs"
-                onClick={() => toggleVideoInPlaylist(pl._id, false)}
+        <div className="grid gap-2 py-2 max-h-[300px] overflow-y-auto px-6">
+          {playlists.map(pl => {
+            const isVideoInPlaylist = pl.videos?.includes(videoId);
+            return (
+              <div
+                key={pl._id}
+                className={`flex items-center justify-between p-3 rounded-xl transition-all ${
+                  isVideoInPlaylist
+                    ? 'bg-primary/20 border-primary/30'
+                    : 'hover:bg-primary/10 border-transparent'
+                } border`}
               >
-                Add
-              </Button>
-            </div>
-          ))}
+                <div
+                  className="flex items-center space-x-3 w-full cursor-pointer"
+                  onClick={() =>
+                    toggleVideoInPlaylist(pl._id, isVideoInPlaylist)
+                  }
+                >
+                  <div
+                    className={`flex h-5 w-5 items-center justify-center rounded border transition-colors ${
+                      isVideoInPlaylist
+                        ? 'bg-accent border-accent text-accent-foreground'
+                        : 'border-primary/40 bg-transparent'
+                    }`}
+                  >
+                    {isVideoInPlaylist && (
+                      <Check className="h-3 w-3 stroke-[4px]" />
+                    )}
+                  </div>
+                  <Label className="text-sm font-medium cursor-pointer leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex-1">
+                    {pl.name}
+                  </Label>
+                </div>
+              </div>
+            );
+          })}
           {playlists.length === 0 && (
-            <p className="text-sm text-muted-foreground w-full text-center">
-              No playlists found.
-            </p>
+            <div className="py-12 text-center">
+              <List className="h-10 w-10 text-muted-foreground mx-auto mb-3 opacity-30" />
+              <p className="text-sm text-muted-foreground italic">
+                No playlists found.
+              </p>
+            </div>
           )}
         </div>
 
-        <div className="flex items-center gap-2 border-t pt-4">
-          <Input
-            placeholder="New Playlist Name"
-            value={newPlaylistName}
-            onChange={e => setNewPlaylistName(e.target.value)}
-          />
-          <Button onClick={createPlaylist} size="sm">
-            Create
+        <div className="space-y-4 p-6 border-t border-primary/20 bg-primary/5">
+          <div className="flex items-center gap-2">
+            <Input
+              placeholder="New Playlist Name"
+              value={newPlaylistName}
+              onChange={e => setNewPlaylistName(e.target.value)}
+              className="bg-background/50 border-primary/20 focus-visible:ring-accent rounded-lg h-10"
+            />
+            <Button
+              onClick={createPlaylist}
+              size="sm"
+              className="rounded-lg h-10 px-4 bg-accent text-accent-foreground hover:bg-accent/90"
+            >
+              <Plus className="h-4 w-4" />
+            </Button>
+          </div>
+          <Button
+            onClick={() => setOpen(false)}
+            variant="default"
+            className="w-full rounded-lg bg-primary text-foreground hover:bg-primary/80 font-bold"
+          >
+            Done
           </Button>
         </div>
       </DialogContent>

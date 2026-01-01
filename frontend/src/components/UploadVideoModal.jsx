@@ -74,58 +74,100 @@ export function UploadVideoModal() {
       <DialogTrigger asChild>
         <Button>Upload Video</Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>Upload New Video</DialogTitle>
+      <DialogContent className="sm:max-w-[450px] rounded-2xl border-primary/30 bg-card p-0 overflow-hidden shadow-2xl">
+        <DialogHeader className="p-6 pb-2">
+          <DialogTitle className="text-xl font-bold text-foreground">
+            Upload New Video
+          </DialogTitle>
         </DialogHeader>
-        {error && <div className="text-sm text-red-500">{error}</div>}
-        <form onSubmit={handleSubmit} className="grid gap-4 py-4">
-          <div className="grid gap-2">
-            <Label htmlFor="title">Title</Label>
-            <Input
-              id="title"
-              name="title"
-              value={formData.title}
-              onChange={handleChange}
-              required
-            />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="description">Description</Label>
-            <Textarea
-              id="description"
-              name="description"
-              value={formData.description}
-              onChange={handleChange}
-              required
-            />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="videoFile">Video File</Label>
-            <Input
-              id="videoFile"
-              name="videoFile"
-              type="file"
-              accept="video/*"
-              onChange={handleChange}
-              required
-            />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="thumbnail">Thumbnail</Label>
-            <Input
-              id="thumbnail"
-              name="thumbnail"
-              type="file"
-              accept="image/*"
-              onChange={handleChange}
-              required
-            />
-          </div>
-          <Button type="submit" disabled={loading}>
-            {loading ? 'Uploading...' : 'Publish Video'}
-          </Button>
-        </form>
+        <div className="px-6 pb-6">
+          {error && (
+            <div className="mb-4 rounded-lg bg-red-500/10 p-3 text-xs text-red-400 border border-red-500/20">
+              {error}
+            </div>
+          )}
+          <form onSubmit={handleSubmit} className="grid gap-5">
+            <div className="grid gap-2">
+              <Label
+                htmlFor="title"
+                className="text-sm font-semibold text-foreground/80"
+              >
+                Title
+              </Label>
+              <Input
+                id="title"
+                name="title"
+                value={formData.title}
+                onChange={handleChange}
+                placeholder="Give your video a catchy title"
+                className="bg-primary/10 border-primary/20 focus-visible:ring-accent rounded-lg"
+                required
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label
+                htmlFor="description"
+                className="text-sm font-semibold text-foreground/80"
+              >
+                Description
+              </Label>
+              <Textarea
+                id="description"
+                name="description"
+                value={formData.description}
+                onChange={handleChange}
+                placeholder="What is your video about?"
+                className="bg-primary/10 border-primary/20 focus-visible:ring-accent rounded-lg min-h-[100px]"
+                required
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label
+                  htmlFor="videoFile"
+                  className="text-sm font-semibold text-foreground/80"
+                >
+                  Video File
+                </Label>
+                <div className="relative group cursor-pointer">
+                  <Input
+                    id="videoFile"
+                    name="videoFile"
+                    type="file"
+                    accept="video/*"
+                    onChange={handleChange}
+                    className="cursor-pointer file:cursor-pointer bg-primary/10 border-primary/20 focus-visible:ring-accent rounded-lg h-12 py-2 file:mr-2 file:py-0 file:px-2 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-primary file:text-foreground"
+                    required
+                  />
+                </div>
+              </div>
+              <div className="grid gap-2">
+                <Label
+                  htmlFor="thumbnail"
+                  className="text-sm font-semibold text-foreground/80"
+                >
+                  Thumbnail
+                </Label>
+                <Input
+                  id="thumbnail"
+                  name="thumbnail"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleChange}
+                  className="cursor-pointer file:cursor-pointer bg-primary/10 border-primary/20 focus-visible:ring-accent rounded-lg h-12 py-2 file:mr-2 file:py-0 file:px-2 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-primary file:text-foreground"
+                  required
+                />
+              </div>
+            </div>
+            <Button
+              type="submit"
+              disabled={loading}
+              className="w-full rounded-lg bg-accent text-accent-foreground font-bold h-11 shadow-lg transition-all hover:scale-[1.02] hover:bg-accent/90 active:scale-[0.98]"
+            >
+              {loading ? 'Uploading...' : 'Publish Video'}
+            </Button>
+          </form>
+        </div>
       </DialogContent>
     </Dialog>
   );

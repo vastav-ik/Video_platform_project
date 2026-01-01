@@ -14,7 +14,7 @@ function Avatar({ src, alt = 'Avatar', size = 'md', className, fallback }) {
   return (
     <div
       className={cn(
-        'rounded-full bg-muted overflow-hidden shrink-0',
+        'rounded-full bg-primary/20 overflow-hidden shrink-0 border border-primary/30',
         avatarSizes[size],
         className
       )}
@@ -27,7 +27,7 @@ function Avatar({ src, alt = 'Avatar', size = 'md', className, fallback }) {
           onError={() => setError(true)}
         />
       ) : (
-        <div className="h-full w-full flex items-center justify-center bg-primary/10 text-primary font-semibold">
+        <div className="h-full w-full flex items-center justify-center bg-primary/20 text-accent font-bold uppercase">
           {fallback || alt?.charAt(0)?.toUpperCase() || '?'}
         </div>
       )}
