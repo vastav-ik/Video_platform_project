@@ -9,95 +9,155 @@ import { asyncHandler } from '../utilities/asyncHandler.js';
 
 const toggleVideoLike = asyncHandler(async (req, res) => {
   const { videoId } = req.params;
+  const { type = 'like' } = req.body;
 
   if (!isValidObjectId(videoId)) {
     throw new ApiError(400, 'Invalid Video ID');
   }
 
-  const likedAlready = await Like.findOne({
+  const existingResponse = await Like.findOne({
     video: videoId,
     likedBy: req.user?._id,
   });
 
-  if (likedAlready) {
-    await Like.findByIdAndDelete(likedAlready?._id);
-    await Video.findByIdAndUpdate(videoId, { $inc: { likesCount: -1 } });
-    return res
-      .status(200)
-      .json(new ApiResponse(200, { isLiked: false }, 'Unliked successfully'));
+  if (existingResponse) {
+    if (existingResponse.type === type) {
+      await Like.findByIdAndDelete(existingResponse._id);
+      const incField = type === 'like' ? 'likesCount' : 'dislikesCount';
+      await Video.findByIdAndUpdate(videoId, { $inc: { [incField]: -1 } });
+      return res
+        .status(200)
+        .json(new ApiResponse(200, { type: null }, 'Removed successfully'));
+    } else {
+      const oldType = existingResponse.type;
+      existingResponse.type = type;
+      await existingResponse.save();
+
+      const incUpdate = {};
+      incUpdate[type === 'like' ? 'likesCount' : 'dislikesCount'] = 1;
+      incUpdate[oldType === 'like' ? 'likesCount' : 'dislikesCount'] = -1;
+
+      await Video.findByIdAndUpdate(videoId, { $inc: incUpdate });
+      return res
+        .status(200)
+        .json(new ApiResponse(200, { type }, `Switched to ${type}`));
+    }
   }
 
   await Like.create({
     video: videoId,
     likedBy: req.user?._id,
+    type,
   });
-  await Video.findByIdAndUpdate(videoId, { $inc: { likesCount: 1 } });
+
+  const incField = type === 'like' ? 'likesCount' : 'dislikesCount';
+  await Video.findByIdAndUpdate(videoId, { $inc: { [incField]: 1 } });
 
   return res
     .status(200)
-    .json(new ApiResponse(200, { isLiked: true }, 'Liked successfully'));
+    .json(new ApiResponse(200, { type }, `${type} added successfully`));
 });
 
 const toggleCommentLike = asyncHandler(async (req, res) => {
   const { commentId } = req.params;
+  const { type = 'like' } = req.body;
 
   if (!isValidObjectId(commentId)) {
     throw new ApiError(400, 'Invalid Comment ID');
   }
 
-  const likedAlready = await Like.findOne({
+  const existingResponse = await Like.findOne({
     comment: commentId,
     likedBy: req.user?._id,
   });
 
-  if (likedAlready) {
-    await Like.findByIdAndDelete(likedAlready?._id);
-    await Comment.findByIdAndUpdate(commentId, { $inc: { likesCount: -1 } });
-    return res
-      .status(200)
-      .json(new ApiResponse(200, { isLiked: false }, 'Unliked successfully'));
+  if (existingResponse) {
+    if (existingResponse.type === type) {
+      await Like.findByIdAndDelete(existingResponse._id);
+      const incField = type === 'like' ? 'likesCount' : 'dislikesCount';
+      await Comment.findByIdAndUpdate(commentId, { $inc: { [incField]: -1 } });
+      return res
+        .status(200)
+        .json(new ApiResponse(200, { type: null }, 'Removed successfully'));
+    } else {
+      const oldType = existingResponse.type;
+      existingResponse.type = type;
+      await existingResponse.save();
+
+      const incUpdate = {};
+      incUpdate[type === 'like' ? 'likesCount' : 'dislikesCount'] = 1;
+      incUpdate[oldType === 'like' ? 'likesCount' : 'dislikesCount'] = -1;
+
+      await Comment.findByIdAndUpdate(commentId, { $inc: incUpdate });
+      return res
+        .status(200)
+        .json(new ApiResponse(200, { type }, `Switched to ${type}`));
+    }
   }
 
   await Like.create({
     comment: commentId,
     likedBy: req.user?._id,
+    type,
   });
-  await Comment.findByIdAndUpdate(commentId, { $inc: { likesCount: 1 } });
+
+  const incField = type === 'like' ? 'likesCount' : 'dislikesCount';
+  await Comment.findByIdAndUpdate(commentId, { $inc: { [incField]: 1 } });
 
   return res
     .status(200)
-    .json(new ApiResponse(200, { isLiked: true }, 'Liked successfully'));
+    .json(new ApiResponse(200, { type }, `${type} added successfully`));
 });
 
 const toggleCardLike = asyncHandler(async (req, res) => {
   const { cardId } = req.params;
+  const { type = 'like' } = req.body;
 
   if (!isValidObjectId(cardId)) {
     throw new ApiError(400, 'Invalid Card ID');
   }
 
-  const likedAlready = await Like.findOne({
+  const existingResponse = await Like.findOne({
     card: cardId,
     likedBy: req.user?._id,
   });
 
-  if (likedAlready) {
-    await Like.findByIdAndDelete(likedAlready?._id);
-    await Card.findByIdAndUpdate(cardId, { $inc: { likesCount: -1 } });
-    return res
-      .status(200)
-      .json(new ApiResponse(200, { isLiked: false }, 'Unliked successfully'));
+  if (existingResponse) {
+    if (existingResponse.type === type) {
+      await Like.findByIdAndDelete(existingResponse._id);
+      const incField = type === 'like' ? 'likesCount' : 'dislikesCount';
+      await Card.findByIdAndUpdate(cardId, { $inc: { [incField]: -1 } });
+      return res
+        .status(200)
+        .json(new ApiResponse(200, { type: null }, 'Removed successfully'));
+    } else {
+      const oldType = existingResponse.type;
+      existingResponse.type = type;
+      await existingResponse.save();
+
+      const incUpdate = {};
+      incUpdate[type === 'like' ? 'likesCount' : 'dislikesCount'] = 1;
+      incUpdate[oldType === 'like' ? 'likesCount' : 'dislikesCount'] = -1;
+
+      await Card.findByIdAndUpdate(cardId, { $inc: incUpdate });
+      return res
+        .status(200)
+        .json(new ApiResponse(200, { type }, `Switched to ${type}`));
+    }
   }
 
   await Like.create({
     card: cardId,
     likedBy: req.user?._id,
+    type,
   });
-  await Card.findByIdAndUpdate(cardId, { $inc: { likesCount: 1 } });
+
+  const incField = type === 'like' ? 'likesCount' : 'dislikesCount';
+  await Card.findByIdAndUpdate(cardId, { $inc: { [incField]: 1 } });
 
   return res
     .status(200)
-    .json(new ApiResponse(200, { isLiked: true }, 'Liked successfully'));
+    .json(new ApiResponse(200, { type }, `${type} added successfully`));
 });
 
 const getLikedVideos = asyncHandler(async (req, res) => {

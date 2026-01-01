@@ -10,7 +10,13 @@ const __dirname = path.dirname(__filename);
 const app = express();
 app.use(
   cors({
-    origin: process.env.CORS_ORIGIN,
+    origin: [
+      process.env.CORS_ORIGIN,
+      'http://localhost:5173',
+      'http://localhost:5174',
+      'http://localhost:5175',
+      'http://localhost:3000',
+    ],
     credentials: true,
   })
 );
@@ -41,6 +47,9 @@ app.use('/api/v1/cards', cardRouter);
 app.use('/api/v1/dashboard', dashboardRouter);
 
 app.use(express.static(path.join(__dirname, '../frontend/dist')));
+
+import { errorHandler } from './middlewares/error.middleware.js';
+app.use(errorHandler);
 
 app.get(/./, (req, res) => {
   res.sendFile(path.join(__dirname, '../frontend/dist', 'index.html'));

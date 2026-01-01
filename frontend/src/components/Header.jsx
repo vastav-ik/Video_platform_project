@@ -2,24 +2,20 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
-import { Video, LogOut, Search } from 'lucide-react';
+import { Video, Search } from 'lucide-react';
 import axios from 'axios';
 
+import UserPanel from './UserPanel';
+
+import { useSelector, useDispatch } from 'react-redux';
+import { login, logout } from '../store/authSlice';
+
 function Header() {
-  const [user, setUser] = useState(null);
+  const { user } = useSelector(state => state.auth);
+  const dispatch = useDispatch();
   const [searchTerm, setSearchTerm] = useState('');
+  const [isPanelOpen, setIsPanelOpen] = useState(false);
   const navigate = useNavigate();
-
-  useEffect(() => {
-    const checkUser = () => {
-      const storedUser = localStorage.getItem('user');
-      setUser(storedUser ? JSON.parse(storedUser) : null);
-    };
-
-    checkUser();
-    window.addEventListener('storage', checkUser);
-    return () => window.removeEventListener('storage', checkUser);
-  }, []);
 
   const handleSearch = e => {
     e.preventDefault();
@@ -28,30 +24,9 @@ function Header() {
     }
   };
 
-  const handleLogout = async () => {
-    try {
-      const token = localStorage.getItem('accessToken');
-      if (token) {
-        await axios.post(
-          `${import.meta.env.VITE_API_BASE_URL}/users/logout`,
-          {},
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-      }
-    } catch (error) {
-      console.error('Logout error', error);
-    } finally {
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('refreshToken');
-      localStorage.removeItem('user');
-      setUser(null);
-      navigate('/login');
-    }
-  };
-
   return (
     <header className="sticky top-0 z-50 w-full px-4 py-4">
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between rounded-xl border border-primary/50 bg-background/80 px-6 backdrop-blur-xl shadow-2xl transition-all hover:border-accent/40">
+      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between rounded-xl border border-primary/50 bg-background/80 px-6 backdrop-blur-xl shadow-2xl transition-all hover:border-accent/40 relative">
         <Link
           to="/"
           className="flex items-center space-x-2 transition-transform hover:scale-105"
@@ -100,17 +75,23 @@ function Header() {
             </Link>
           </nav>
 
-          <div className="flex items-center space-x-3 border-l border-primary/30 pl-4">
+          <div className="flex items-center space-x-3 border-l border-primary/30 pl-4 relative">
             {user ? (
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={handleLogout}
-                className="text-red-400 hover:bg-red-500/10 hover:text-red-300"
-              >
-                <LogOut className="mr-2 h-4 w-4" />
-                Logout
-              </Button>
+              <div className="relative">
+                <button
+                  onClick={() => setIsPanelOpen(!isPanelOpen)}
+                  className="flex items-center gap-2 hover:opacity-80 transition"
+                >
+                  <img
+                    src={user.avatar?.url}
+                    alt={user.username}
+                    className="w-9 h-9 rounded-full object-cover border-2 border-primary"
+                  />
+                </button>
+                {isPanelOpen && (
+                  <UserPanel closePanel={() => setIsPanelOpen(false)} />
+                )}
+              </div>
             ) : (
               <>
                 <Link to="/login">

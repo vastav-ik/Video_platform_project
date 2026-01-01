@@ -1,6 +1,7 @@
 import mongoose, { isValidObjectId } from 'mongoose';
 import { Video } from '../models/video.models.js';
 import { User } from '../models/user.models.js';
+import { Subscription } from '../models/subscription.models.js';
 import { ApiError } from '../utilities/APIError.js';
 import { ApiResponse } from '../utilities/APIResponse.js';
 import { asyncHandler } from '../utilities/asyncHandler.js';
@@ -29,14 +30,19 @@ const getAllVideos = asyncHandler(async (req, res) => {
     if (!isValidObjectId(userId)) {
       throw new ApiError(400, 'Invalid User ID');
     }
-    pipeline.push({
-      $match: {
-        owner: new mongoose.Types.ObjectId(userId),
-      },
-    });
-  }
+    const isOwner = req.user?._id?.toString() === userId.toString();
+    const matchStage = {
+      owner: new mongoose.Types.ObjectId(userId),
+    };
 
-  pipeline.push({ $match: { isPublished: true } });
+    if (!isOwner) {
+      matchStage.status = 'public';
+    }
+
+    pipeline.push({ $match: matchStage });
+  } else {
+    pipeline.push({ $match: { status: 'public' } });
+  }
 
   if (sortBy && sortType) {
     pipeline.push({
@@ -54,12 +60,15 @@ const getAllVideos = asyncHandler(async (req, res) => {
       localField: 'owner',
       foreignField: '_id',
       as: 'owner',
-      pipeline: [{ $project: { username: 1, avatar: 1 } }],
     },
   });
 
   pipeline.push({
-    $unwind: '$owner',
+    $addFields: {
+      owner: {
+        $first: '$owner',
+      },
+    },
   });
   const videoAggregate = Video.aggregate(pipeline);
   const options = {
@@ -129,6 +138,7 @@ const getVideoById = asyncHandler(async (req, res) => {
     throw new ApiError(400, 'Invalid Video ID');
   }
 
+  console.log(`Fetching video: ${videoId}`);
   const video = await Video.aggregate([
     {
       $match: {
@@ -153,8 +163,32 @@ const getVideoById = asyncHandler(async (req, res) => {
       },
     },
     {
+      $lookup: {
+        from: 'subscriptions',
+        localField: 'owner._id',
+        foreignField: 'subscribedTo',
+        as: 'isSubscribed',
+        pipeline: [
+          {
+            $match: {
+              subscriber: req.user?._id
+                ? new mongoose.Types.ObjectId(req.user._id)
+                : null,
+            },
+          },
+        ],
+      },
+    },
+    {
       $addFields: {
         owner: { $first: '$owner' },
+        isSubscribed: {
+          $cond: {
+            if: { $gt: [{ $size: '$isSubscribed' }, 0] },
+            then: true,
+            else: false,
+          },
+        },
       },
     },
     {
@@ -188,7 +222,43 @@ const getVideoById = asyncHandler(async (req, res) => {
   ]);
 
   if (!video?.length) {
+    console.log('Video not found in aggregation');
     throw new ApiError(404, 'Video not found');
+  }
+
+  const videoData = video[0];
+  console.log(`Video status: ${videoData.status}`);
+  console.log(`User: ${req.user?._id}`);
+
+  if (
+    videoData.status === 'private' &&
+    videoData.owner._id.toString() !== req.user?._id?.toString()
+  ) {
+    console.log('Privacy Restricted');
+    throw new ApiError(403, 'This video is private.');
+  }
+
+  if (videoData.status === 'members-only') {
+    if (!req.user) {
+      console.log('Members-only: No user');
+      throw new ApiError(403, 'Login required to access members-only content');
+    }
+
+    if (videoData.owner._id.toString() !== req.user._id.toString()) {
+      const subscription = await Subscription.findOne({
+        subscriber: req.user._id,
+        subscribedTo: videoData.owner._id,
+        isMember: true,
+      });
+
+      if (!subscription) {
+        console.log('Members-only: Not a member');
+        throw new ApiError(
+          403,
+          'This video is for members only. Join the channel to watch.'
+        );
+      }
+    }
   }
 
   if (req.user?._id) {

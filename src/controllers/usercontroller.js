@@ -419,6 +419,31 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
             else: false,
           },
         },
+        isMember: {
+          $cond: {
+            if: {
+              $gt: [
+                {
+                  $size: {
+                    $filter: {
+                      input: '$subscribers',
+                      as: 'sub',
+                      cond: {
+                        $and: [
+                          { $eq: ['$$sub.subscriber', req.user?._id] },
+                          { $eq: ['$$sub.isMember', true] },
+                        ],
+                      },
+                    },
+                  },
+                },
+                0,
+              ],
+            },
+            then: true,
+            else: false,
+          },
+        },
       },
     },
     {
@@ -431,6 +456,7 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
         avatar: 1,
         coverImage: 1,
         email: 1,
+        isMember: 1,
       },
     },
   ]);
@@ -446,6 +472,60 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
     );
 });
 
+const searchUsers = asyncHandler(async (req, res) => {
+  const { query } = req.query;
+
+  if (!query) {
+    throw new ApiError(400, 'Query is required');
+  }
+
+  const users = await User.aggregate([
+    {
+      $match: {
+        $or: [
+          { username: { $regex: query, $options: 'i' } },
+          { fullName: { $regex: query, $options: 'i' } },
+        ],
+      },
+    },
+    {
+      $lookup: {
+        from: 'subscriptions',
+        localField: '_id',
+        foreignField: 'subscribedTo',
+        as: 'subscribers',
+      },
+    },
+    {
+      $addFields: {
+        subscribersCount: { $size: '$subscribers' },
+        isSubscribed: {
+          $cond: {
+            if: {
+              $in: [req.user?._id, '$subscribers.subscriber'],
+            },
+            then: true,
+            else: false,
+          },
+        },
+      },
+    },
+    {
+      $project: {
+        username: 1,
+        fullName: 1,
+        avatar: 1,
+        subscribersCount: 1,
+        isSubscribed: 1,
+      },
+    },
+  ]);
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, users, 'Users fetched successfully'));
+});
+
 export {
   registerUser,
   loginUser,
@@ -458,6 +538,7 @@ export {
   updateUserCoverImage,
   updateUserPassword,
   getUserChannelProfile,
+  searchUsers,
 };
 
 export default registerUser;

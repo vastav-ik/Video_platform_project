@@ -2,20 +2,22 @@ import React, { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import VideoCard from '@/components/VideoCard';
+import ChannelCard from '@/components/ChannelCard';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Video } from 'lucide-react';
+import { Video, Search } from 'lucide-react';
 
 function Home() {
   const [videos, setVideos] = useState([]);
+  const [channels, setChannels] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchParams] = useSearchParams();
   const query = searchParams.get('query');
 
   useEffect(() => {
-    const fetchVideos = async () => {
+    const fetchData = async () => {
       setLoading(true);
       try {
-        const response = await axios.get(
+        const videoPromise = axios.get(
           `${import.meta.env.VITE_API_BASE_URL}/videos`,
           {
             params: {
@@ -25,14 +27,32 @@ function Home() {
             },
           }
         );
-        setVideos(response.data.data?.docs || response.data.data || []);
+
+        let channelPromise = Promise.resolve({ data: { data: [] } });
+        if (query) {
+          channelPromise = axios.get(
+            `${import.meta.env.VITE_API_BASE_URL}/users/search`,
+            {
+              params: { query },
+            }
+          );
+        }
+
+        const [videoRes, channelRes] = await Promise.all([
+          videoPromise,
+          channelPromise,
+        ]);
+
+        setVideos(videoRes.data.data?.docs || videoRes.data.data || []);
+        setChannels(channelRes.data.data || []);
       } catch (error) {
+        console.error('Search failed', error);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchVideos();
+    fetchData();
   }, [query]);
 
   return (
@@ -56,23 +76,49 @@ function Home() {
             </div>
           ))}
         </div>
-      ) : videos.length === 0 ? (
+      ) : videos.length === 0 && channels.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-center">
           <div className="mb-4 rounded-full bg-primary/10 p-6">
-            <Video className="h-10 w-10 text-primary" />
+            <Search className="h-10 w-10 text-primary" />
           </div>
           <p className="text-xl font-medium text-foreground">
-            {query ? `No videos found for "${query}"` : 'No videos available'}
+            {query ? `No results found for "${query}"` : 'No videos available'}
           </p>
           <p className="mt-2 text-muted-foreground">
             Try searching for something else or explore our homepage.
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {videos.map(video => (
-            <VideoCard key={video._id} video={video} />
-          ))}
+        <div className="space-y-12">
+          {/* Channels Section */}
+          {channels.length > 0 && (
+            <div className="space-y-4">
+              <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
+                <span className="h-1.5 w-1.5 rounded-full bg-primary"></span>
+                Channels & Creators
+              </h2>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {channels.map(channel => (
+                  <ChannelCard key={channel._id} channel={channel} />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Videos Section */}
+          <div className="space-y-4">
+            {channels.length > 0 && videos.length > 0 && (
+              <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
+                <span className="h-1.5 w-1.5 rounded-full bg-primary"></span>
+                Videos
+              </h2>
+            )}
+            <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {videos.map(video => (
+                <VideoCard key={video._id} video={video} />
+              ))}
+            </div>
+          </div>
         </div>
       )}
     </div>

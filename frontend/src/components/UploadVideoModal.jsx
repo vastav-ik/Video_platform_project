@@ -40,6 +40,7 @@ export function UploadVideoModal() {
     const data = new FormData();
     data.append('title', formData.title);
     data.append('description', formData.description);
+    data.append('status', formData.status || 'public');
     if (formData.videoFile) data.append('videoFile', formData.videoFile);
     if (formData.thumbnail) data.append('thumbnail', formData.thumbnail);
 
@@ -60,8 +61,7 @@ export function UploadVideoModal() {
 
       toast.success('Video uploaded successfully!');
       setOpen(false);
-      // Ideally trigger a refresh in parent, but for now just close
-      window.location.reload(); // Simple refresh to show new video
+      window.location.reload();
     } catch (err) {
       setError(err.response?.data?.message || 'Upload failed');
     } finally {
@@ -120,6 +120,26 @@ export function UploadVideoModal() {
                 className="bg-primary/10 border-primary/20 focus-visible:ring-accent rounded-lg min-h-[100px]"
                 required
               />
+            </div>
+            <div className="grid gap-2">
+              <Label
+                htmlFor="status"
+                className="text-sm font-semibold text-foreground/80"
+              >
+                Visibility
+              </Label>
+              <select
+                id="status"
+                name="status"
+                value={formData.status || 'public'}
+                onChange={handleChange}
+                className="bg-primary/10 border-primary/20 focus-visible:ring-accent rounded-lg h-10 px-3 text-sm"
+              >
+                <option value="public">Public</option>
+                <option value="private">Private</option>
+                <option value="unlisted">Unlisted</option>
+                <option value="members-only">Members Only</option>
+              </select>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">

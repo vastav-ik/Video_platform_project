@@ -6,6 +6,8 @@ import {
   updateCard,
   deleteCard,
   getAllCards,
+  repostCard,
+  quoteCard,
 } from '../controllers/card.controller.js';
 import { verifyJWT } from '../middlewares/auth.middleware.js';
 import { upload } from '../middlewares/multer.middleware.js';
@@ -37,5 +39,8 @@ router
   .route('/:cardId')
   .patch(verifyJWT, updateCard)
   .delete(verifyJWT, deleteCard);
+
+router.route('/repost/:cardId').post(verifyJWT, repostCard);
+router.route('/quote/:cardId').post(verifyJWT, quoteCard);
 
 export default router;

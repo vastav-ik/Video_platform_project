@@ -13,6 +13,11 @@ const commentSchema = new Schema(
 
     video: { type: mongoose.Schema.Types.ObjectId, ref: 'Video' },
     card: { type: mongoose.Schema.Types.ObjectId, ref: 'Card' },
+    parentComment: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Comment',
+      default: null,
+    },
 
     likesCount: { type: Number, default: 0 },
 

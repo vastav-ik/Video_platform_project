@@ -27,10 +27,6 @@ export function AddToPlaylistModal({ videoId }) {
 
       const response = await axios.get(
         `${import.meta.env.VITE_API_BASE_URL}/playlists/user/${user._id}`
-        // Auth header might affect visibility, but getting own playlists usually requires auth if private?
-        // Let's verify routes. getUserPlaylists is public in route but usually we want "my" playlists.
-        // If route is public, it returns public playlists.
-        // Wait, to add to playlist, I must own it.
       );
       setPlaylists(response.data.data || []);
     } catch (error) {
@@ -76,7 +72,7 @@ export function AddToPlaylistModal({ videoId }) {
           { headers: { Authorization: `Bearer ${token}` } }
         );
       }
-      fetchPlaylists(); // Refresh to update local state of which playlists have the video
+      fetchPlaylists();
     } catch (error) {}
   };
 

@@ -10,6 +10,7 @@ import {
   updateUserCoverImage,
   updateUserPassword,
   getUserChannelProfile,
+  searchUsers,
 } from '../controllers/usercontroller.js';
 import {
   verifyJWT,
@@ -44,5 +45,6 @@ router
   .patch(verifyJWT, upload.single('coverImage'), updateUserCoverImage);
 
 router.route('/c/:username').get(optionalVerifyJWT, getUserChannelProfile);
+router.route('/search').get(optionalVerifyJWT, searchUsers);
 
 export default router;

@@ -94,11 +94,14 @@ function VideoPlayer() {
   const handleSubscribe = async () => {
     try {
       const token = localStorage.getItem('accessToken');
+
       if (!token) {
         toast.error('Please login to subscribe');
         return;
       }
-      if (!video?.owner?._id) return;
+      if (!video?.owner?._id) {
+        return;
+      }
 
       await axios.post(
         `${import.meta.env.VITE_API_BASE_URL}/subscriptions/c/${video.owner._id}`,

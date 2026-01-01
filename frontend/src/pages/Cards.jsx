@@ -88,16 +88,25 @@ function Cards() {
   if (loading) return <div className="p-8 text-center">Loading...</div>;
 
   return (
-    <div className="container max-w-2xl py-8">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-bold">Cards</h1>
+    <div className="mx-auto max-w-4xl px-4 py-12 md:px-8">
+      <div className="mb-10 flex flex-col items-center justify-between gap-6 md:flex-row">
+        <div>
+          <h1 className="bg-gradient-to-r from-primary to-accent bg-clip-text text-4xl font-black tracking-tight text-transparent md:text-5xl">
+            Community Cards
+          </h1>
+          <p className="mt-2 text-muted-foreground">
+            Share your thoughts and updates with the community.
+          </p>
+        </div>
         {user && (
-          <div className="flex items-center gap-2 bg-muted p-1 rounded-lg">
+          <div className="flex items-center gap-1 rounded-2xl border border-primary/20 bg-card/50 p-1.5 shadow-inner backdrop-blur-sm">
             <Button
               variant={activeTab === 'all' ? 'secondary' : 'ghost'}
               size="sm"
               onClick={() => setActiveTab('all')}
-              className="rounded-md"
+              className={`rounded-xl px-4 font-bold transition-all ${
+                activeTab === 'all' ? 'shadow-md' : ''
+              }`}
             >
               All Posts
             </Button>
@@ -105,72 +114,142 @@ function Cards() {
               variant={activeTab === 'subscribed' ? 'secondary' : 'ghost'}
               size="sm"
               onClick={() => setActiveTab('subscribed')}
-              className="rounded-md"
+              className={`rounded-xl px-4 font-bold transition-all ${
+                activeTab === 'subscribed' ? 'shadow-md' : ''
+              }`}
             >
-              Subscribed
+              Following
             </Button>
           </div>
         )}
       </div>
 
-      <div className="mb-8 rounded-2xl border bg-card p-6 shadow-sm">
+      <div className="mb-12 rounded-3xl border border-primary/20 bg-gradient-to-br from-card to-muted/20 p-8 shadow-2xl backdrop-blur-md">
+        <div className="mb-4 flex items-center gap-4">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+            <svg
+              className="h-6 w-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+              />
+            </svg>
+          </div>
+          <h2 className="text-xl font-bold text-foreground">Write a Card</h2>
+        </div>
         <form onSubmit={handleSubmit}>
           <Textarea
-            placeholder="What's on your mind?"
+            placeholder="What's spinning in your head?"
             value={content}
             onChange={e => setContent(e.target.value)}
-            className="mb-4 min-h-[100px] bg-muted/20 resize-none border-0 focus-visible:ring-1"
+            className="mb-6 min-h-[140px] rounded-2xl border-primary/10 bg-muted/30 p-4 text-lg ring-offset-background placeholder:text-muted-foreground/50 focus-visible:ring-2 focus-visible:ring-primary/20 transition-all resize-none"
             required
           />
           <div className="flex justify-end">
-            <Button type="submit" className="rounded-xl px-6">
+            <Button
+              type="submit"
+              className="h-12 rounded-2xl bg-primary px-8 font-black uppercase tracking-widest text-primary-foreground shadow-lg shadow-primary/20 transition-all hover:scale-105 hover:shadow-xl active:scale-95"
+            >
               Post Update
             </Button>
           </div>
         </form>
       </div>
 
-      <div className="space-y-6">
+      <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
         {filteredCards.map(card => (
           <div
             key={card._id}
-            className="rounded-2xl border bg-card p-6 shadow-sm transition-all hover:shadow-md"
+            className="group relative flex flex-col rounded-3xl border border-primary/10 bg-card p-8 shadow-sm transition-all duration-300 hover:-translate-y-2 hover:border-primary/30 hover:shadow-2xl"
           >
-            <div className="flex items-center gap-3 mb-4">
-              <div className="h-10 w-10 rounded-full bg-muted overflow-hidden">
-                {card.author?.avatar?.url && (
+            <div className="mb-6 flex items-center gap-4">
+              <div className="relative h-14 w-14 overflow-hidden rounded-2xl bg-muted p-0.5 shadow-md ring-2 ring-primary/10 transition-all group-hover:ring-primary/30">
+                {card.author?.avatar?.url ? (
                   <img
                     src={card.author.avatar.url}
                     alt={card.author.username}
-                    className="h-full w-full object-cover"
+                    className="h-full w-full rounded-[14px] object-cover"
                   />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center bg-primary/5 text-xl font-bold text-primary">
+                    {card.author?.username?.charAt(0).toUpperCase() || 'U'}
+                  </div>
                 )}
               </div>
               <div>
-                <p className="font-semibold text-foreground">
-                  {card.author?.username || 'User'}
+                <p className="text-lg font-black tracking-tight text-foreground group-hover:text-primary transition-colors">
+                  {card.author?.username || 'Anonymous'}
                 </p>
-                <p className="text-xs text-muted-foreground">
-                  {new Date(card.createdAt).toLocaleDateString()}
-                </p>
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <span className="flex h-1.5 w-1.5 rounded-full bg-green-500"></span>
+                  {new Date(card.createdAt).toLocaleDateString(undefined, {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric',
+                  })}
+                </div>
               </div>
             </div>
-            <p className="whitespace-pre-wrap text-base leading-relaxed text-foreground/90">
-              {card.content}
-            </p>
+            <div className="relative flex-1">
+              <span className="absolute -left-2 -top-2 scale-150 text-4xl opacity-5">
+                "
+              </span>
+              <p className="relative z-10 whitespace-pre-wrap text-lg leading-relaxed text-foreground/80 group-hover:text-foreground transition-colors">
+                {card.content}
+              </p>
+            </div>
+            <div className="mt-8 flex justify-end opacity-0 transition-opacity group-hover:opacity-100">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/5 text-primary hover:bg-primary/10 transition-colors cursor-pointer">
+                <svg
+                  className="h-5 w-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"
+                  />
+                </svg>
+              </div>
+            </div>
           </div>
         ))}
-        {filteredCards.length === 0 && (
-          <div className="py-12 text-center">
-            <p className="text-muted-foreground">No updates found.</p>
-            {activeTab === 'subscribed' && (
-              <p className="text-sm text-muted-foreground mt-2">
-                Try subscribing to some channels!
-              </p>
-            )}
-          </div>
-        )}
       </div>
+
+      {filteredCards.length === 0 && (
+        <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-primary/20 py-24 text-center">
+          <div className="mb-6 rounded-full bg-primary/5 p-8">
+            <svg
+              className="h-12 w-12 text-primary/40"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={1.5}
+                d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+              />
+            </svg>
+          </div>
+          <p className="text-2xl font-black text-foreground/40">No Cards Yet</p>
+          <p className="mt-2 max-w-sm text-muted-foreground">
+            {activeTab === 'subscribed'
+              ? "Follow some creators to see their updates here, or switch to 'All Posts'."
+              : 'Be the first one to share an update with the community!'}
+          </p>
+        </div>
+      )}
     </div>
   );
 }

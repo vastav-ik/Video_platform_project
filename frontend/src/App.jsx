@@ -7,7 +7,7 @@ import Register from './pages/Register';
 import VideoPlayer from './pages/VideoPlayer';
 import Dashboard from './pages/Dashboard';
 import Cards from './pages/Cards';
-import ChannelProfile from './pages/ChannelProfile';
+import ChannelPage from './pages/ChannelPage';
 import Playlists from './pages/Playlists';
 import PlaylistDetail from './pages/PlaylistDetail';
 
@@ -25,7 +25,8 @@ function App() {
             <Route path="/videos/:videoId" element={<VideoPlayer />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/cards" element={<Cards />} />
-            <Route path="/c/:username" element={<ChannelProfile />} />
+            <Route path="/channel/:username" element={<ChannelPage />} />
+            <Route path="/c/:username" element={<ChannelPage />} />
             <Route path="/playlists" element={<Playlists />} />
             <Route path="/playlists/:playlistId" element={<PlaylistDetail />} />
           </Routes>

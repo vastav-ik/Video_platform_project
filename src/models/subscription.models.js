@@ -13,6 +13,10 @@ const subscriptionSchema = new Schema(
       ref: 'User',
       required: true,
     },
+    isMember: {
+      type: Boolean,
+      default: false,
+    },
 
     createdAt: { type: Date, default: Date.now },
   },

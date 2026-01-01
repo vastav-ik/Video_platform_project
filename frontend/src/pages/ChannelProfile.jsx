@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/button';
 import { List, Search } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
+import { useSelector } from 'react-redux';
+
 function ChannelProfile() {
   const { username } = useParams();
   const [profile, setProfile] = useState(null);
@@ -14,6 +16,9 @@ function ChannelProfile() {
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [subscribersCount, setSubscribersCount] = useState(0);
   const [activeTab, setActiveTab] = useState('videos');
+  
+  const user = useSelector(state => state.auth.user);
+  const isOwner = user?._id === profile?._id;
 
   useEffect(() => {
     const fetchChannelData = async () => {
@@ -66,7 +71,9 @@ function ChannelProfile() {
       );
       setIsSubscribed(prev => !prev);
       setSubscribersCount(prev => (isSubscribed ? prev - 1 : prev + 1));
-    } catch (error) {}
+    } catch (error) {
+      alert(error.response?.data?.message || 'Failed to subscribe');
+    }
   };
 
   if (loading) return <div className="p-8 text-center">Loading Channel...</div>;
@@ -96,7 +103,6 @@ function ChannelProfile() {
         <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent" />
       </div>
 
-      <div className="mx-auto max-w-7xl px-4 py-6 md:px-8">
         <div className="relative z-10 -mt-20 flex flex-col items-center gap-6 md:-mt-24 md:flex-row md:items-start">
           <div className="h-32 w-32 shrink-0 overflow-hidden rounded-full border-4 border-background bg-card shadow-2xl transition-transform hover:scale-105 md:h-40 md:w-40">
             {profile.avatar?.url ? (
@@ -126,16 +132,18 @@ function ChannelProfile() {
           </div>
 
           <div className="mt-6 md:mt-24">
-            <Button
-              onClick={handleSubscribe}
-              className={`rounded-full px-8 py-6 font-bold shadow-lg transition-all hover:scale-105 active:scale-95 ${
-                isSubscribed
-                  ? 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
-                  : 'bg-foreground text-background hover:bg-foreground/90'
-              }`}
-            >
-              {isSubscribed ? 'Subscribed' : 'Subscribe'}
-            </Button>
+            {!isOwner && (
+              <Button
+                onClick={handleSubscribe}
+                className={`rounded-full px-8 py-6 font-bold shadow-lg transition-all hover:scale-105 active:scale-95 ${
+                  isSubscribed
+                    ? 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
+                    : 'bg-foreground text-background hover:bg-foreground/90'
+                }`}
+              >
+                {isSubscribed ? 'Subscribed' : 'Subscribe'}
+              </Button>
+            )}
           </div>
         </div>
 

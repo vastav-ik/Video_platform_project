@@ -32,11 +32,15 @@ const createCard = asyncHandler(async (req, res) => {
     if (video) videoUrl = video.url;
   }
 
+  const hashtags =
+    content.match(/#[\w\d]+/g)?.map(tag => tag.substring(1)) || [];
+
   const card = await Card.create({
     content,
     image: imageUrl,
     video: videoUrl,
     author: req.user?._id,
+    hashtags,
   });
 
   if (!card) {
@@ -46,6 +50,56 @@ const createCard = asyncHandler(async (req, res) => {
   return res
     .status(201)
     .json(new ApiResponse(201, card, 'Card created successfully'));
+});
+
+const repostCard = asyncHandler(async (req, res) => {
+  const { cardId } = req.params;
+
+  if (!isValidObjectId(cardId)) {
+    throw new ApiError(400, 'Invalid Card ID');
+  }
+
+  const originalCard = await Card.findById(cardId);
+  if (!originalCard) {
+    throw new ApiError(404, 'Original card not found');
+  }
+
+  const repost = await Card.create({
+    author: req.user?._id,
+    originalCard: cardId,
+    type: 'repost',
+  });
+
+  return res
+    .status(201)
+    .json(new ApiResponse(201, repost, 'Card reposted successfully'));
+});
+
+const quoteCard = asyncHandler(async (req, res) => {
+  const { cardId } = req.params;
+  const { content } = req.body;
+
+  if (!isValidObjectId(cardId)) {
+    throw new ApiError(400, 'Invalid Card ID');
+  }
+  if (!content) {
+    throw new ApiError(400, 'Content is required for quoting');
+  }
+
+  const hashtags =
+    content.match(/#[\w\d]+/g)?.map(tag => tag.substring(1)) || [];
+
+  const quote = await Card.create({
+    author: req.user?._id,
+    originalCard: cardId,
+    content,
+    hashtags,
+    type: 'quote',
+  });
+
+  return res
+    .status(201)
+    .json(new ApiResponse(201, quote, 'Card quoted successfully'));
 });
 
 const getUserCards = asyncHandler(async (req, res) => {
@@ -249,4 +303,6 @@ export {
   updateCard,
   deleteCard,
   getAllCards,
+  repostCard,
+  quoteCard,
 };

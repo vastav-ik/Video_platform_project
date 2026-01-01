@@ -14,7 +14,9 @@ try {
 
 connectDB()
   .then(() => {
-    app.listen(PORT, () => {});
+    app.listen(PORT, () => {
+      console.log(`\n⚙️  Server is running at port : ${PORT}`);
+    });
   })
   .catch(err => {
     console.error('MongoDB connection failed:', err);

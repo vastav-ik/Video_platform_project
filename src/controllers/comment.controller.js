@@ -18,6 +18,7 @@ const getVideoComments = asyncHandler(async (req, res) => {
     {
       $match: {
         video: new mongoose.Types.ObjectId(videoId),
+        parentComment: null, // Only fetch top-level comments
       },
     },
     {
@@ -70,6 +71,7 @@ const getCardComments = asyncHandler(async (req, res) => {
     {
       $match: {
         card: new mongoose.Types.ObjectId(cardId),
+        parentComment: null, // Only fetch top-level comments
       },
     },
     {
@@ -112,13 +114,17 @@ const getCardComments = asyncHandler(async (req, res) => {
 
 const addVideoComment = asyncHandler(async (req, res) => {
   const { videoId } = req.params;
-  const { content } = req.body;
+  const { content, parentCommentId } = req.body;
 
   if (!isValidObjectId(videoId)) {
     throw new ApiError(400, 'Invalid Video ID');
   }
   if (!content) {
     throw new ApiError(400, 'Content is required');
+  }
+
+  if (parentCommentId && !isValidObjectId(parentCommentId)) {
+    throw new ApiError(400, 'Invalid Parent Comment ID');
   }
 
   const video = await Video.findById(videoId);
@@ -130,6 +136,7 @@ const addVideoComment = asyncHandler(async (req, res) => {
     content,
     video: videoId,
     author: req.user?._id,
+    parentComment: parentCommentId || null,
   });
 
   if (!comment) {
@@ -145,13 +152,17 @@ const addVideoComment = asyncHandler(async (req, res) => {
 
 const addCardComment = asyncHandler(async (req, res) => {
   const { cardId } = req.params;
-  const { content } = req.body;
+  const { content, parentCommentId } = req.body;
 
   if (!isValidObjectId(cardId)) {
     throw new ApiError(400, 'Invalid Card ID');
   }
   if (!content) {
     throw new ApiError(400, 'Content is required');
+  }
+
+  if (parentCommentId && !isValidObjectId(parentCommentId)) {
+    throw new ApiError(400, 'Invalid Parent Comment ID');
   }
 
   const card = await Card.findById(cardId);
@@ -163,6 +174,7 @@ const addCardComment = asyncHandler(async (req, res) => {
     content,
     card: cardId,
     author: req.user?._id,
+    parentComment: parentCommentId || null,
   });
 
   if (!comment) {

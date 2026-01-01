@@ -7,6 +7,9 @@ import { asyncHandler } from '../utilities/asyncHandler.js';
 
 const toggleSubscription = asyncHandler(async (req, res) => {
   const { channelId } = req.params;
+  console.log(
+    `Toggling subscription for user ${req.user?._id} to channel ${channelId}`
+  );
 
   if (!isValidObjectId(channelId)) {
     throw new ApiError(400, 'Invalid Channel ID');
@@ -58,7 +61,13 @@ const toggleSubscription = asyncHandler(async (req, res) => {
 });
 
 const getUserChannelSubscribers = asyncHandler(async (req, res) => {
-  const { channelId } = req.params;
+  let { subscriberId } = req.params;
+
+  if (!isValidObjectId(subscriberId)) {
+    throw new ApiError(400, 'Invalid Channel/Subscriber ID');
+  }
+
+  const channelId = subscriberId;
 
   if (!isValidObjectId(channelId)) {
     throw new ApiError(400, 'Invalid Channel ID');
@@ -108,7 +117,13 @@ const getUserChannelSubscribers = asyncHandler(async (req, res) => {
 });
 
 const getSubscribedChannels = asyncHandler(async (req, res) => {
-  const { subscriberId } = req.params;
+  let { channelId } = req.params;
+
+  if (!isValidObjectId(channelId)) {
+    throw new ApiError(400, 'Invalid Subscriber ID');
+  }
+
+  const subscriberId = channelId;
 
   if (!isValidObjectId(subscriberId)) {
     throw new ApiError(400, 'Invalid Subscriber ID');
@@ -161,4 +176,67 @@ const getSubscribedChannels = asyncHandler(async (req, res) => {
     );
 });
 
-export { toggleSubscription, getUserChannelSubscribers, getSubscribedChannels };
+const toggleMembership = asyncHandler(async (req, res) => {
+  const { channelId } = req.params;
+  console.log(
+    `[DEBUG] Attempting to toggle membership. User: ${req.user?._id}, Channel: ${channelId}`
+  );
+
+  if (!isValidObjectId(channelId)) {
+    throw new ApiError(400, 'Invalid Channel ID');
+  }
+
+  if (channelId.toString() === req.user?._id.toString()) {
+    throw new ApiError(400, 'You cannot join your own channel');
+  }
+
+  const subscription = await Subscription.findOne({
+    subscriber: req.user?._id,
+    subscribedTo: channelId,
+  });
+
+  if (subscription) {
+    subscription.isMember = !subscription.isMember;
+    await subscription.save();
+
+    return res
+      .status(200)
+      .json(
+        new ApiResponse(
+          200,
+          { isMember: subscription.isMember },
+          subscription.isMember
+            ? 'Membership activated successfully'
+            : 'Membership deactivated successfully'
+        )
+      );
+  } else {
+    await Subscription.create({
+      subscriber: req.user?._id,
+      subscribedTo: channelId,
+      isMember: true,
+    });
+
+    await User.findByIdAndUpdate(channelId, { $inc: { subscribersCount: 1 } });
+    await User.findByIdAndUpdate(req.user?._id, {
+      $inc: { subscribedToCount: 1 },
+    });
+
+    return res
+      .status(200)
+      .json(
+        new ApiResponse(
+          200,
+          { isMember: true },
+          'Membership activated successfully'
+        )
+      );
+  }
+});
+
+export {
+  toggleSubscription,
+  getUserChannelSubscribers,
+  getSubscribedChannels,
+  toggleMembership,
+};

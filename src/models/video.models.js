@@ -22,9 +22,23 @@ const videoSchema = new Schema(
 
     duration: { type: Number },
     views: { type: Number, default: 0 },
-    isPublished: { type: Boolean, default: true },
+    status: {
+      type: String,
+      enum: ['public', 'private', 'unlisted', 'members-only'],
+      default: 'public',
+    },
+    transcodedFiles: [
+      {
+        quality: String, // '1080p', '720p', etc.
+        url: String,
+      },
+    ],
+    tags: [String],
+    category: { type: String },
+    allowComments: { type: Boolean, default: true },
 
     likesCount: { type: Number, default: 0 },
+    dislikesCount: { type: Number, default: 0 },
     commentsCount: { type: Number, default: 0 },
     index: { type: Number, default: 0 },
   },

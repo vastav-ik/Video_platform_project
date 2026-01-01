@@ -5,6 +5,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from '@/lib/toast';
 
+import { useDispatch } from 'react-redux';
+import { login } from '../store/authSlice';
+
 function Login() {
   const [formData, setFormData] = useState({
     username: '',
@@ -12,6 +15,7 @@ function Login() {
   });
   const [error, setError] = useState('');
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   useEffect(() => {
     const token = localStorage.getItem('accessToken');
@@ -32,8 +36,9 @@ function Login() {
         `${import.meta.env.VITE_API_BASE_URL}/users/login`,
         formData
       );
-      localStorage.setItem('accessToken', response.data.data.accessToken);
-      localStorage.setItem('user', JSON.stringify(response.data.data.user));
+      const { accessToken, user } = response.data.data;
+      localStorage.setItem('accessToken', accessToken);
+      dispatch(login(user));
       toast.success('Login successful!');
       navigate('/');
     } catch (err) {

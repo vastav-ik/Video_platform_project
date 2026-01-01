@@ -12,6 +12,11 @@ const likesSchema = new Schema(
     video: { type: mongoose.Schema.Types.ObjectId, ref: 'Video' },
     card: { type: mongoose.Schema.Types.ObjectId, ref: 'Card' },
     comment: { type: mongoose.Schema.Types.ObjectId, ref: 'Comment' },
+    type: {
+      type: String,
+      enum: ['like', 'dislike'],
+      default: 'like',
+    },
   },
   { timestamps: true }
 );

@@ -22,6 +22,20 @@ const userSchema = new Schema(
       url: String,
       publicId: String,
     },
+    channelBanner: {
+      url: String,
+      publicId: String,
+    },
+    channelTrailer: {
+      type: Schema.Types.ObjectId,
+      ref: 'Video',
+    },
+    links: [
+      {
+        title: String,
+        url: String,
+      },
+    ],
     bio: { type: String, maxlength: 200 },
 
     subscribersCount: { type: Number, default: 0 },

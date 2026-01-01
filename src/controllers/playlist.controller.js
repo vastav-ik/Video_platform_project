@@ -35,14 +35,16 @@ const getUserPlaylists = asyncHandler(async (req, res) => {
     throw new ApiError(400, 'Invalid User ID');
   }
 
+  const orConditions = [{ isPrivate: false }];
+  if (req.user?._id) {
+    orConditions.push({ owner: new mongoose.Types.ObjectId(req.user._id) });
+  }
+
   const playlists = await Playlist.aggregate([
     {
       $match: {
         owner: new mongoose.Types.ObjectId(userId),
-        $or: [
-          { isPrivate: false },
-          { owner: new mongoose.Types.ObjectId(req.user?._id) },
-        ],
+        $or: orConditions,
       },
     },
     {
@@ -91,14 +93,16 @@ const getPlaylistById = asyncHandler(async (req, res) => {
     throw new ApiError(400, 'Invalid Playlist ID');
   }
 
+  const orConditions = [{ isPrivate: false }];
+  if (req.user?._id) {
+    orConditions.push({ owner: new mongoose.Types.ObjectId(req.user._id) });
+  }
+
   const playlist = await Playlist.aggregate([
     {
       $match: {
         _id: new mongoose.Types.ObjectId(playlistId),
-        $or: [
-          { isPrivate: false },
-          { owner: new mongoose.Types.ObjectId(req.user?._id) },
-        ],
+        $or: orConditions,
       },
     },
     {
@@ -208,8 +212,11 @@ const removeVideoFromPlaylist = asyncHandler(async (req, res) => {
     throw new ApiError(404, 'Playlist not found');
   }
 
-  if (playlist.owner.toString() !== req.user?._id.toString()) {
-    throw new ApiError(403, 'You are not authorized to modify this playlist');
+  if (playlist.owner.toString() !== req.user?._id?.toString()) {
+    throw new ApiError(
+      403,
+      'Only the creator can remove items from this playlist'
+    );
   }
 
   playlist.videos = playlist.videos.filter(
