@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import axios from 'axios';
+import api from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Plus, List } from 'lucide-react';
 import {
@@ -26,13 +26,8 @@ function Playlists() {
       const userStr = localStorage.getItem('user');
       if (!userStr) return;
       const user = JSON.parse(userStr);
-      const token = localStorage.getItem('accessToken');
-      const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
-      const response = await axios.get(
-        `${import.meta.env.VITE_API_BASE_URL}/playlists/user/${user._id}`,
-        { headers }
-      );
+      const response = await api.get(`/playlists/user/${user._id}`);
       setPlaylists(response.data.data || []);
     } catch (error) {
     } finally {
@@ -49,12 +44,10 @@ function Playlists() {
     if (!newPlaylistName.trim()) return;
 
     try {
-      const token = localStorage.getItem('accessToken');
-      await axios.post(
-        `${import.meta.env.VITE_API_BASE_URL}/playlists`,
-        { name: newPlaylistName, description: newPlaylistDesc },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      await api.post('/playlists', {
+        name: newPlaylistName,
+        description: newPlaylistDesc,
+      });
       setNewPlaylistName('');
       setNewPlaylistDesc('');
       setOpen(false);

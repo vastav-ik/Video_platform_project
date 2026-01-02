@@ -1,29 +1,31 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { formatDuration, formatTimeAgo, formatViews } from '@/lib/time';
+import { formatDuration, formatViews } from '@/lib/time';
+import { formatDistanceToNow } from 'date-fns';
 
 function VideoCard({ video, variant = 'default' }) {
   const navigate = useNavigate();
   if (!video) return null;
 
-  const handleCardClick = () => {
-    navigate(`/videos/${video._id}`);
-  };
+  const handleCardClick = () => navigate(`/videos/${video._id}`);
+
+  const containerClasses = `group flex flex-col overflow-hidden rounded-xl border border-primary/30 bg-card transition-all hover:border-accent/50 hover:shadow-xl cursor-pointer ${
+    variant === 'compact' || variant === 'sidebar'
+      ? 'flex-row gap-3 border-0 bg-transparent p-1 hover:bg-primary/10'
+      : ''
+  }`;
+
+  const thumbClasses = `relative aspect-video overflow-hidden rounded-lg bg-primary/20 ${
+    variant === 'compact'
+      ? 'w-48 shrink-0'
+      : variant === 'sidebar'
+        ? 'w-32 shrink-0'
+        : 'w-full'
+  }`;
 
   return (
-    <div
-      onClick={handleCardClick}
-      className={`group flex flex-col overflow-hidden rounded-xl border border-primary/30 bg-card transition-all hover:border-accent/50 hover:shadow-xl cursor-pointer ${
-        variant === 'compact'
-          ? 'flex-row gap-3 border-0 bg-transparent p-1 hover:bg-primary/10'
-          : ''
-      } ${variant === 'sidebar' ? 'flex-row gap-2 border-0 bg-transparent p-1 hover:bg-primary/10' : ''}`}
-    >
-      <div
-        className={`relative aspect-video overflow-hidden rounded-lg bg-primary/20 ${
-          variant === 'compact' ? 'w-48 shrink-0' : 'w-full'
-        } ${variant === 'sidebar' ? 'w-32 shrink-0' : ''}`}
-      >
+    <div onClick={handleCardClick} className={containerClasses}>
+      <div className={thumbClasses}>
         <img
           src={
             typeof video.thumbnail === 'string'
@@ -37,7 +39,7 @@ function VideoCard({ video, variant = 'default' }) {
           {formatDuration(video.duration)}
         </div>
         {video.status === 'members-only' && (
-          <div className="absolute top-2 right-2 rounded bg-purple-600/90 px-2 py-0.5 text-[10px] font-bold text-white backdrop-blur-sm border border-purple-400/30 shadow-lg">
+          <div className="absolute top-2 right-2 rounded bg-purple-600/90 px-2 py-0.5 text-[10px] font-bold text-white border border-purple-400/30">
             MEMBERS ONLY
           </div>
         )}
@@ -62,7 +64,7 @@ function VideoCard({ video, variant = 'default' }) {
                   className="h-full w-full object-cover"
                 />
               ) : (
-                <div className="flex h-full w-full items-center justify-center bg-primary text-xs font-bold text-foreground">
+                <div className="flex h-full w-full items-center justify-center bg-primary text-xs font-bold">
                   {video.owner?.username?.charAt(0).toUpperCase()}
                 </div>
               )}
@@ -70,9 +72,7 @@ function VideoCard({ video, variant = 'default' }) {
           )}
           <div className="flex flex-col gap-1 min-w-0">
             <h3
-              className={`line-clamp-2 font-heading font-semibold leading-tight text-foreground transition-colors group-hover:text-accent ${
-                variant === 'default' ? 'text-base' : 'text-sm'
-              }`}
+              className={`line-clamp-2 font-heading font-semibold leading-tight transition-colors group-hover:text-accent ${variant === 'default' ? 'text-base' : 'text-sm'}`}
             >
               {video.title}
             </h3>
@@ -92,9 +92,8 @@ function VideoCard({ video, variant = 'default' }) {
                 <span>{formatViews(video.views)} views</span>
                 <span className="text-[8px] opacity-40">•</span>
                 <span>
-                  {new Date(video.createdAt).toLocaleDateString(undefined, {
-                    month: 'short',
-                    day: 'numeric',
+                  {formatDistanceToNow(new Date(video.createdAt), {
+                    addSuffix: true,
                   })}
                 </span>
               </div>

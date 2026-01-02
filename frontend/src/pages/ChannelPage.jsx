@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import axios from 'axios';
+import api from '@/lib/api';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import VideoCard from '../components/VideoCard';
 import { Card } from '../components/Card';
 import PlaylistCard from '../components/PlaylistCard';
+import { toast } from '@/lib/toast';
 
 const ChannelPage = () => {
   const { username } = useParams();
@@ -12,52 +13,65 @@ const ChannelPage = () => {
   const [videos, setVideos] = useState([]);
   const [playlists, setPlaylists] = useState([]);
   const [cards, setCards] = useState([]);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [isSubscribed, setIsSubscribed] = useState(false);
+
+  useEffect(() => {
+    const user = localStorage.getItem('user');
+    if (user) setCurrentUser(JSON.parse(user));
+  }, []);
 
   useEffect(() => {
     const fetchChannelData = async () => {
       try {
-        const res = await axios.get(
-          `${import.meta.env.VITE_API_BASE_URL}/users/c/${username}`
-        );
-        setChannel(res.data.data);
+        const res = await api.get(`/users/c/${username}`);
+        const channelData = res.data.data;
+        setChannel(channelData);
+        setIsSubscribed(channelData.isSubscribed || false);
 
-        const videoRes = await axios.get(
-          `${import.meta.env.VITE_API_BASE_URL}/videos?userId=${res.data.data._id}`
-        );
+        const [videoRes, playlistRes, cardRes] = await Promise.all([
+          api.get(`/videos?userId=${channelData._id}`),
+          api.get(`/playlists/user/${channelData._id}`),
+          api.get(`/cards/user/${channelData._id}`),
+        ]);
+
         setVideos(videoRes.data.data?.docs || []);
-
-        const playlistRes = await axios.get(
-          `${import.meta.env.VITE_API_BASE_URL}/playlist/user/${res.data.data._id}`
-        );
         setPlaylists(playlistRes.data.data || []);
-
-        const cardRes = await axios.get(
-          `${import.meta.env.VITE_API_BASE_URL}/cards/user/${res.data.data._id}`
-        );
         setCards(cardRes.data.data?.docs || []);
       } catch (error) {
-        console.error('Failed to fetch channel data', error);
+        toast.error('Failed to load channel data');
       }
     };
     fetchChannelData();
   }, [username]);
 
+  const handleSubscribe = async () => {
+    if (!channel) return;
+    try {
+      await api.post(`/subscriptions/c/${channel._id}`);
+      setIsSubscribed(prev => !prev);
+      setChannel(prev => ({
+        ...prev,
+        subscribersCount: !isSubscribed
+          ? prev.subscribersCount + 1
+          : prev.subscribersCount - 1,
+      }));
+      toast.success(isSubscribed ? 'Unsubscribed' : 'Subscribed');
+    } catch (error) {
+      toast.error('Subscription update failed');
+    }
+  };
+
   const handleToggleMembership = async () => {
     if (!channel) return;
     try {
-      const token = localStorage.getItem('accessToken');
-      if (!token) return alert('Please login to join');
-
-      const response = await axios.post(
-        `${import.meta.env.VITE_API_BASE_URL}/subscriptions/c/${channel._id}/membership`,
-        {},
-        { headers: { Authorization: `Bearer ${token}` } }
+      const response = await api.post(
+        `/subscriptions/c/${channel._id}/membership`
       );
-
       setChannel(prev => ({ ...prev, isMember: response.data.data.isMember }));
-      alert(response.data.message);
+      toast.success(response.data.message);
     } catch (error) {
-      alert(error.response?.data?.message || 'Failed to update membership');
+      toast.error('Membership update failed');
     }
   };
 
@@ -92,24 +106,28 @@ const ChannelPage = () => {
             </p>
           </div>
           <div className="ml-auto mb-4 flex gap-3">
-            {channel.isMember ? (
-              <button
-                onClick={handleToggleMembership}
-                className="bg-purple-600 text-white px-6 py-2 rounded-full font-semibold hover:bg-purple-700 transition shadow-lg shadow-purple-500/20"
-              >
-                Member
-              </button>
-            ) : (
-              <button
-                onClick={handleToggleMembership}
-                className="bg-transparent border-2 border-purple-500 text-purple-400 px-6 py-2 rounded-full font-semibold hover:bg-purple-500/10 transition"
-              >
-                Join
-              </button>
+            {currentUser?._id !== channel._id && (
+              <>
+                <button
+                  onClick={handleToggleMembership}
+                  className={`${
+                    channel.isMember
+                      ? 'bg-purple-600'
+                      : 'bg-transparent border-2 border-purple-500 text-purple-400'
+                  } text-white px-6 py-2 rounded-full font-semibold hover:opacity-90 transition shadow-lg shadow-purple-500/20`}
+                >
+                  {channel.isMember ? 'Member' : 'Join'}
+                </button>
+                <button
+                  onClick={handleSubscribe}
+                  className={`${
+                    isSubscribed ? 'bg-gray-600' : 'bg-white text-black'
+                  } px-6 py-2 rounded-full font-semibold hover:opacity-90 transition`}
+                >
+                  {isSubscribed ? 'Subscribed' : 'Subscribe'}
+                </button>
+              </>
             )}
-            <button className="bg-white text-black px-6 py-2 rounded-full font-semibold hover:bg-gray-200 transition">
-              Subscribe
-            </button>
           </div>
         </div>
       </div>
@@ -119,26 +137,25 @@ const ChannelPage = () => {
           <TabsList className="bg-transparent border-b border-gray-700 w-full justify-start rounded-none p-0 h-auto">
             <TabsTrigger
               value="videos"
-              className="px-6 py-3 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary text-muted-foreground hover:text-foreground transition-all"
+              className="px-6 py-3 rounded-none border-b-2 border-transparent data-[state=active]:border-primary transition-all"
             >
               Videos
             </TabsTrigger>
             <TabsTrigger
               value="community"
-              className="px-6 py-3 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary text-muted-foreground hover:text-foreground transition-all"
+              className="px-6 py-3 rounded-none border-b-2 border-transparent data-[state=active]:border-primary transition-all"
             >
               Community
             </TabsTrigger>
             <TabsTrigger
               value="playlists"
-              className="px-6 py-3 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary text-muted-foreground hover:text-foreground transition-all"
+              className="px-6 py-3 rounded-none border-b-2 border-transparent data-[state=active]:border-primary transition-all"
             >
               Playlists
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="videos" className="mt-6">
-            <h2 className="text-xl font-semibold mb-4">Uploads</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {videos?.map(video => (
                 <VideoCard key={video._id} video={video} />

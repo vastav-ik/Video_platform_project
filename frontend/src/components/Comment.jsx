@@ -4,64 +4,43 @@ import { Avatar } from './Avatar';
 import { Button } from './ui/button';
 import { ThumbsUp, Trash2 } from 'lucide-react';
 import { formatTimeAgo } from '@/lib/time';
-import axios from 'axios';
+import api from '@/lib/api';
 import { toast } from '@/lib/toast';
 
-function Comment({ comment, currentUserId, onDelete, videoId }) {
+function Comment({ comment, currentUserId, onDelete }) {
   const [likes, setLikes] = useState(comment.likesCount || 0);
   const [isLiked, setIsLiked] = useState(comment.isLiked || false);
   const [loading, setLoading] = useState(false);
 
   const handleLike = async () => {
     if (loading) return;
-
     try {
       setLoading(true);
-      const token = localStorage.getItem('accessToken');
-      if (!token) {
-        toast.error('Please login to like comments');
-        return;
-      }
-
-      await axios.post(
-        `${import.meta.env.VITE_API_BASE_URL}/likes/toggle/c/${comment._id}`,
-        {},
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
+      await api.post(`/likes/toggle/c/${comment._id}`);
       setIsLiked(prev => !prev);
       setLikes(prev => (isLiked ? prev - 1 : prev + 1));
     } catch (error) {
-      console.error('Error liking comment', error);
-      toast.error('Failed to like comment');
+      toast.error('Failed to update like');
     } finally {
       setLoading(false);
     }
   };
 
   const handleDelete = async () => {
-    if (!window.confirm('Are you sure you want to delete this comment?'))
-      return;
-
+    if (!window.confirm('Delete this comment?')) return;
     try {
-      const token = localStorage.getItem('accessToken');
-      await axios.delete(
-        `${import.meta.env.VITE_API_BASE_URL}/comments/c/${comment._id}`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
+      await api.delete(`/comments/${comment._id}`);
       toast.success('Comment deleted');
       if (onDelete) onDelete(comment._id);
     } catch (error) {
-      console.error('Error deleting comment', error);
       toast.error('Failed to delete comment');
     }
   };
 
-  const isOwner = currentUserId && currentUserId === comment.owner?._id;
+  const isOwner = currentUserId === comment.owner?._id;
 
   return (
-    <div className="flex gap-4 items-start py-4 border-b border-border/50 last:border-0">
+    <div className="flex gap-4 items-start py-4 border-b border-border/50 last:border-0 transition-all hover:bg-primary/[0.01] px-2 rounded-xl">
       <Link to={`/c/${comment.owner?.username}`}>
         <Avatar
           src={comment.owner?.avatar?.url}
@@ -75,16 +54,16 @@ function Comment({ comment, currentUserId, onDelete, videoId }) {
         <div className="flex items-baseline gap-2 mb-1">
           <Link
             to={`/c/${comment.owner?.username}`}
-            className="font-semibold text-sm hover:text-primary"
+            className="font-bold text-sm hover:text-primary transition-colors"
           >
             {comment.owner?.username || 'User'}
           </Link>
-          <span className="text-xs text-muted-foreground">
+          <span className="text-[10px] text-muted-foreground uppercase font-black tracking-tighter opacity-50">
             {formatTimeAgo(comment.createdAt)}
           </span>
         </div>
 
-        <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">
+        <p className="text-sm text-foreground/90 whitespace-pre-wrap leading-relaxed font-medium">
           {comment.content}
         </p>
 
@@ -94,10 +73,10 @@ function Comment({ comment, currentUserId, onDelete, videoId }) {
             size="sm"
             onClick={handleLike}
             disabled={loading}
-            className={`h-8 gap-1.5 ${isLiked ? 'text-primary' : 'text-muted-foreground'}`}
+            className={`h-8 gap-1.5 rounded-full hover:bg-primary/10 transition-all ${isLiked ? 'text-primary' : 'text-muted-foreground'}`}
           >
             <ThumbsUp className={`h-4 w-4 ${isLiked ? 'fill-current' : ''}`} />
-            {likes > 0 && <span className="text-xs">{likes}</span>}
+            {likes > 0 && <span className="text-xs font-bold">{likes}</span>}
           </Button>
 
           {isOwner && (
@@ -105,10 +84,10 @@ function Comment({ comment, currentUserId, onDelete, videoId }) {
               variant="ghost"
               size="sm"
               onClick={handleDelete}
-              className="h-8 gap-1.5 text-destructive hover:text-destructive hover:bg-destructive/10"
+              className="h-8 gap-1.5 text-destructive hover:text-destructive hover:bg-destructive/10 rounded-full transition-all"
             >
               <Trash2 className="h-4 w-4" />
-              <span className="text-xs">Delete</span>
+              <span className="text-xs font-bold">Delete</span>
             </Button>
           )}
         </div>

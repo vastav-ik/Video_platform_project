@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import axios from 'axios';
+import api from '@/lib/api';
 import {
   Dialog,
   DialogContent,
@@ -22,14 +22,12 @@ export function UploadVideoModal() {
     description: '',
     videoFile: null,
     thumbnail: null,
+    status: 'public',
   });
 
   const handleChange = e => {
-    if (e.target.files) {
-      setFormData({ ...formData, [e.target.name]: e.target.files[0] });
-    } else {
-      setFormData({ ...formData, [e.target.name]: e.target.value });
-    }
+    const { name, value, files } = e.target;
+    setFormData(prev => ({ ...prev, [name]: files ? files[0] : value }));
   };
 
   const handleSubmit = async e => {
@@ -38,32 +36,17 @@ export function UploadVideoModal() {
     setLoading(true);
 
     const data = new FormData();
-    data.append('title', formData.title);
-    data.append('description', formData.description);
-    data.append('status', formData.status || 'public');
-    if (formData.videoFile) data.append('videoFile', formData.videoFile);
-    if (formData.thumbnail) data.append('thumbnail', formData.thumbnail);
+    Object.keys(formData).forEach(key => {
+      if (formData[key]) data.append(key, formData[key]);
+    });
 
     try {
-      const token = localStorage.getItem('accessToken');
-      if (!token) throw new Error('Not authenticated');
-
-      const response = await axios.post(
-        `${import.meta.env.VITE_API_BASE_URL}/videos`,
-        data,
-        {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      toast.success('Video uploaded successfully!');
+      await api.post('/videos', data);
+      toast.success('Video published!');
       setOpen(false);
       window.location.reload();
     } catch (err) {
-      setError(err.response?.data?.message || 'Upload failed');
+      setError(err.response?.data?.message || 'Publishing failed');
     } finally {
       setLoading(false);
     }
@@ -72,25 +55,27 @@ export function UploadVideoModal() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button>Upload Video</Button>
+        <Button className="rounded-full font-bold px-6 shadow-lg hover:scale-105 active:scale-95 transition-all">
+          Upload Video
+        </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[450px] rounded-2xl border-primary/30 bg-card p-0 overflow-hidden shadow-2xl">
-        <DialogHeader className="p-6 pb-2">
-          <DialogTitle className="text-xl font-bold text-foreground">
-            Upload New Video
+      <DialogContent className="sm:max-w-[450px] rounded-[2rem] border-primary/20 bg-card p-0 shadow-2xl">
+        <DialogHeader className="p-8 pb-4">
+          <DialogTitle className="text-2xl font-black tracking-tight">
+            Post Content
           </DialogTitle>
         </DialogHeader>
-        <div className="px-6 pb-6">
+        <div className="px-8 pb-8">
           {error && (
-            <div className="mb-4 rounded-lg bg-red-500/10 p-3 text-xs text-red-400 border border-red-500/20">
+            <div className="mb-6 rounded-xl bg-destructive/10 p-4 text-xs font-bold text-destructive border border-destructive/20">
               {error}
             </div>
           )}
-          <form onSubmit={handleSubmit} className="grid gap-5">
+          <form onSubmit={handleSubmit} className="grid gap-6">
             <div className="grid gap-2">
               <Label
                 htmlFor="title"
-                className="text-sm font-semibold text-foreground/80"
+                className="text-[10px] font-black uppercase tracking-widest text-muted-foreground"
               >
                 Title
               </Label>
@@ -99,15 +84,14 @@ export function UploadVideoModal() {
                 name="title"
                 value={formData.title}
                 onChange={handleChange}
-                placeholder="Give your video a catchy title"
-                className="bg-primary/10 border-primary/20 focus-visible:ring-accent rounded-lg"
+                className="rounded-xl bg-muted/50 border-primary/10 h-12"
                 required
               />
             </div>
             <div className="grid gap-2">
               <Label
                 htmlFor="description"
-                className="text-sm font-semibold text-foreground/80"
+                className="text-[10px] font-black uppercase tracking-widest text-muted-foreground"
               >
                 Description
               </Label>
@@ -116,24 +100,23 @@ export function UploadVideoModal() {
                 name="description"
                 value={formData.description}
                 onChange={handleChange}
-                placeholder="What is your video about?"
-                className="bg-primary/10 border-primary/20 focus-visible:ring-accent rounded-lg min-h-[100px]"
+                className="rounded-xl bg-muted/50 border-primary/10 min-h-[100px]"
                 required
               />
             </div>
             <div className="grid gap-2">
               <Label
                 htmlFor="status"
-                className="text-sm font-semibold text-foreground/80"
+                className="text-[10px] font-black uppercase tracking-widest text-muted-foreground"
               >
                 Visibility
               </Label>
               <select
                 id="status"
                 name="status"
-                value={formData.status || 'public'}
+                value={formData.status}
                 onChange={handleChange}
-                className="bg-primary/10 border-primary/20 focus-visible:ring-accent rounded-lg h-10 px-3 text-sm"
+                className="rounded-xl bg-muted/50 border-primary/10 h-12 px-4 text-sm font-bold appearance-none"
               >
                 <option value="public">Public</option>
                 <option value="private">Private</option>
@@ -145,26 +128,24 @@ export function UploadVideoModal() {
               <div className="grid gap-2">
                 <Label
                   htmlFor="videoFile"
-                  className="text-sm font-semibold text-foreground/80"
+                  className="text-[10px] font-black uppercase tracking-widest text-muted-foreground"
                 >
-                  Video File
+                  Video
                 </Label>
-                <div className="relative group cursor-pointer">
-                  <Input
-                    id="videoFile"
-                    name="videoFile"
-                    type="file"
-                    accept="video/*"
-                    onChange={handleChange}
-                    className="cursor-pointer file:cursor-pointer bg-primary/10 border-primary/20 focus-visible:ring-accent rounded-lg h-12 py-2 file:mr-2 file:py-0 file:px-2 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-primary file:text-foreground"
-                    required
-                  />
-                </div>
+                <Input
+                  id="videoFile"
+                  name="videoFile"
+                  type="file"
+                  accept="video/*"
+                  onChange={handleChange}
+                  className="h-12 file:bg-primary file:rounded-lg file:border-0 file:text-xs file:font-bold cursor-pointer"
+                  required
+                />
               </div>
               <div className="grid gap-2">
                 <Label
                   htmlFor="thumbnail"
-                  className="text-sm font-semibold text-foreground/80"
+                  className="text-[10px] font-black uppercase tracking-widest text-muted-foreground"
                 >
                   Thumbnail
                 </Label>
@@ -174,7 +155,7 @@ export function UploadVideoModal() {
                   type="file"
                   accept="image/*"
                   onChange={handleChange}
-                  className="cursor-pointer file:cursor-pointer bg-primary/10 border-primary/20 focus-visible:ring-accent rounded-lg h-12 py-2 file:mr-2 file:py-0 file:px-2 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-primary file:text-foreground"
+                  className="h-12 file:bg-primary file:rounded-lg file:border-0 file:text-xs file:font-bold cursor-pointer"
                   required
                 />
               </div>
@@ -182,9 +163,9 @@ export function UploadVideoModal() {
             <Button
               type="submit"
               disabled={loading}
-              className="w-full rounded-lg bg-accent text-accent-foreground font-bold h-11 shadow-lg transition-all hover:scale-[1.02] hover:bg-accent/90 active:scale-[0.98]"
+              className="h-14 rounded-2xl font-black uppercase tracking-[0.2em] shadow-xl hover:scale-[1.02] active:scale-[0.98]"
             >
-              {loading ? 'Uploading...' : 'Publish Video'}
+              {loading ? 'Processing...' : 'Publish'}
             </Button>
           </form>
         </div>

@@ -3,7 +3,6 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Video, Search } from 'lucide-react';
-import axios from 'axios';
 
 import UserPanel from './UserPanel';
 

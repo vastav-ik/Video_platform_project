@@ -7,7 +7,7 @@ export default defineConfig({
   plugins: [react()],
   define: {
     'import.meta.env.VITE_API_BASE_URL': JSON.stringify(
-      'http://localhost:3000/api/v1'
+      'http://localhost:8000/api/v1'
     ),
   },
   resolve: {

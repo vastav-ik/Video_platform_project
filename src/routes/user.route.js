@@ -44,7 +44,9 @@ router
   .route('/update-cover-image')
   .patch(verifyJWT, upload.single('coverImage'), updateUserCoverImage);
 
-router.route('/c/:username').get(optionalVerifyJWT, getUserChannelProfile);
+import { optionalAuth } from '../middlewares/optionalAuth.middleware.js';
+
+router.route('/c/:username').get(optionalAuth, getUserChannelProfile);
 router.route('/search').get(optionalVerifyJWT, searchUsers);
 
 export default router;

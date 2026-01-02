@@ -1,6 +1,5 @@
 @import 'tailwindcss';
 
-/* Import Google Fonts: Outfit (Headings) and Inter (Body) */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&family=Outfit:wght@100..900&display=swap');
 
 @theme {
@@ -10,9 +9,8 @@
 
 @layer base {
   :root {
-    /* New Color Palette */
-    --background: 199 75% 9%; /* #061E29 */
-    --foreground: 180 8% 96%; /* #F3F4F4 */
+    --background: 199 75% 9%;
+    --foreground: 180 8% 96%;
 
     --card: 199 75% 12%;
     --card-foreground: 180 8% 96%;

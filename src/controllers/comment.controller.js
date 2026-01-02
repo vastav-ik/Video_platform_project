@@ -18,7 +18,7 @@ const getVideoComments = asyncHandler(async (req, res) => {
     {
       $match: {
         video: new mongoose.Types.ObjectId(videoId),
-        parentComment: null, // Only fetch top-level comments
+        parentComment: null,
       },
     },
     {
@@ -26,7 +26,7 @@ const getVideoComments = asyncHandler(async (req, res) => {
         from: 'users',
         localField: 'author',
         foreignField: '_id',
-        as: 'author',
+        as: 'owner',
         pipeline: [
           {
             $project: {
@@ -39,7 +39,7 @@ const getVideoComments = asyncHandler(async (req, res) => {
     },
     {
       $addFields: {
-        author: { $first: '$author' },
+        owner: { $first: '$owner' },
       },
     },
     {
@@ -47,12 +47,10 @@ const getVideoComments = asyncHandler(async (req, res) => {
     },
   ]);
 
-  const options = {
+  const comments = await Comment.aggregatePaginate(commentAggregate, {
     page: parseInt(page, 10),
     limit: parseInt(limit, 10),
-  };
-
-  const comments = await Comment.aggregatePaginate(commentAggregate, options);
+  });
 
   return res
     .status(200)
@@ -71,7 +69,7 @@ const getCardComments = asyncHandler(async (req, res) => {
     {
       $match: {
         card: new mongoose.Types.ObjectId(cardId),
-        parentComment: null, // Only fetch top-level comments
+        parentComment: null,
       },
     },
     {
@@ -79,7 +77,7 @@ const getCardComments = asyncHandler(async (req, res) => {
         from: 'users',
         localField: 'author',
         foreignField: '_id',
-        as: 'author',
+        as: 'owner',
         pipeline: [
           {
             $project: {
@@ -92,7 +90,7 @@ const getCardComments = asyncHandler(async (req, res) => {
     },
     {
       $addFields: {
-        author: { $first: '$author' },
+        owner: { $first: '$owner' },
       },
     },
     {
@@ -100,12 +98,10 @@ const getCardComments = asyncHandler(async (req, res) => {
     },
   ]);
 
-  const options = {
+  const comments = await Comment.aggregatePaginate(commentAggregate, {
     page: parseInt(page, 10),
     limit: parseInt(limit, 10),
-  };
-
-  const comments = await Comment.aggregatePaginate(commentAggregate, options);
+  });
 
   return res
     .status(200)

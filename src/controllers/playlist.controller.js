@@ -8,7 +8,7 @@ import { asyncHandler } from '../utilities/asyncHandler.js';
 const createPlaylist = asyncHandler(async (req, res) => {
   const { name, description, isPrivate } = req.body;
 
-  if (!name || name.trim() === '') {
+  if (!name?.trim()) {
     throw new ApiError(400, 'Name is required');
   }
 
@@ -18,10 +18,6 @@ const createPlaylist = asyncHandler(async (req, res) => {
     isPrivate: isPrivate || false,
     owner: req.user?._id,
   });
-
-  if (!playlist) {
-    throw new ApiError(500, 'Failed to create playlist');
-  }
 
   return res
     .status(201)
@@ -53,37 +49,20 @@ const getUserPlaylists = asyncHandler(async (req, res) => {
         localField: 'videos',
         foreignField: '_id',
         as: 'videos',
-        pipeline: [
-          {
-            $project: {
-              thumbnail: 1,
-            },
-          },
-          { $limit: 1 },
-        ],
+        pipeline: [{ $project: { thumbnail: 1 } }, { $limit: 1 }],
       },
     },
     {
       $addFields: {
-        playlistThumbnail: {
-          $cond: {
-            if: { $gt: [{ $size: '$videos' }, 0] },
-            then: { $first: '$videos' },
-            else: null,
-          },
-        },
+        playlistThumbnail: { $first: '$videos' },
       },
     },
-    {
-      $sort: { createdAt: -1 },
-    },
+    { $sort: { createdAt: -1 } },
   ]);
 
   return res
     .status(200)
-    .json(
-      new ApiResponse(200, playlists, 'User playlists fetched successfully')
-    );
+    .json(new ApiResponse(200, playlists, 'Playlists fetched successfully'));
 });
 
 const getPlaylistById = asyncHandler(async (req, res) => {

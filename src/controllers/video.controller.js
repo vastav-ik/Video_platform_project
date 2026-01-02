@@ -84,7 +84,7 @@ const getAllVideos = asyncHandler(async (req, res) => {
 });
 
 const publishAVideo = asyncHandler(async (req, res) => {
-  const { title, description } = req.body;
+  const { title, description, status } = req.body;
 
   if ([title, description].some(field => field.trim() === '')) {
     throw new ApiError(400, 'Title and Description are required');
@@ -119,7 +119,7 @@ const publishAVideo = asyncHandler(async (req, res) => {
     },
     duration: videoFileResponse.duration,
     owner: req.user._id,
-    isPublished: true,
+    status: status || 'public',
   });
 
   const createdVideo = await Video.findById(video._id);
@@ -138,7 +138,6 @@ const getVideoById = asyncHandler(async (req, res) => {
     throw new ApiError(400, 'Invalid Video ID');
   }
 
-  console.log(`Fetching video: ${videoId}`);
   const video = await Video.aggregate([
     {
       $match: {
@@ -196,6 +195,14 @@ const getVideoById = asyncHandler(async (req, res) => {
         from: 'likes',
         localField: '_id',
         foreignField: 'video',
+        as: 'likes',
+      },
+    },
+    {
+      $lookup: {
+        from: 'likes',
+        localField: '_id',
+        foreignField: 'video',
         as: 'isLiked',
         pipeline: [
           {
@@ -203,6 +210,7 @@ const getVideoById = asyncHandler(async (req, res) => {
               likedBy: req.user?._id
                 ? new mongoose.Types.ObjectId(req.user._id)
                 : null,
+              type: 'like',
             },
           },
         ],
@@ -210,6 +218,7 @@ const getVideoById = asyncHandler(async (req, res) => {
     },
     {
       $addFields: {
+        likesCount: { $size: '$likes' },
         isLiked: {
           $cond: {
             if: { $gt: [{ $size: '$isLiked' }, 0] },
@@ -222,37 +231,31 @@ const getVideoById = asyncHandler(async (req, res) => {
   ]);
 
   if (!video?.length) {
-    console.log('Video not found in aggregation');
     throw new ApiError(404, 'Video not found');
   }
 
   const videoData = video[0];
-  console.log(`Video status: ${videoData.status}`);
-  console.log(`User: ${req.user?._id}`);
 
   if (
     videoData.status === 'private' &&
-    videoData.owner._id.toString() !== req.user?._id?.toString()
+    videoData.owner?._id?.toString() !== req.user?._id?.toString()
   ) {
-    console.log('Privacy Restricted');
     throw new ApiError(403, 'This video is private.');
   }
 
   if (videoData.status === 'members-only') {
     if (!req.user) {
-      console.log('Members-only: No user');
       throw new ApiError(403, 'Login required to access members-only content');
     }
 
-    if (videoData.owner._id.toString() !== req.user._id.toString()) {
+    if (videoData.owner?._id?.toString() !== req.user._id.toString()) {
       const subscription = await Subscription.findOne({
         subscriber: req.user._id,
-        subscribedTo: videoData.owner._id,
+        subscribedTo: videoData.owner?._id,
         isMember: true,
       });
 
       if (!subscription) {
-        console.log('Members-only: Not a member');
         throw new ApiError(
           403,
           'This video is for members only. Join the channel to watch.'
@@ -275,12 +278,12 @@ const getVideoById = asyncHandler(async (req, res) => {
 
   return res
     .status(200)
-    .json(new ApiResponse(200, video[0], 'Video fetched successfully'));
+    .json(new ApiResponse(200, videoData, 'Video fetched successfully'));
 });
 
 const updateVideo = asyncHandler(async (req, res) => {
   const { videoId } = req.params;
-  const { title, description } = req.body;
+  const { title, description, status } = req.body;
 
   if (!isValidObjectId(videoId)) {
     throw new ApiError(400, 'Invalid Video ID');
@@ -324,6 +327,7 @@ const updateVideo = asyncHandler(async (req, res) => {
 
   if (title) video.title = title;
   if (description) video.description = description;
+  if (status) video.status = status;
 
   await video.save({ validateBeforeSave: false });
 
@@ -391,13 +395,13 @@ const togglePublishStatus = asyncHandler(async (req, res) => {
     throw new ApiError(403, 'You are not authorized to perform this action');
   }
 
-  video.isPublished = !video.isPublished;
+  video.status = video.status === 'public' ? 'private' : 'public';
   await video.save({ validateBeforeSave: false });
 
   return res
     .status(200)
     .json(
-      new ApiResponse(200, video.isPublished, 'Video publish status toggled')
+      new ApiResponse(200, { status: video.status }, 'Video status toggled')
     );
 });
 

@@ -3,7 +3,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { clearUser } from '../store/authSlice';
 import { LogOut, User, Settings, SwitchCamera } from 'lucide-react';
-import axios from 'axios';
+import api from '@/lib/api';
 
 const UserPanel = ({ closePanel }) => {
   const { user } = useSelector(state => state.auth);
@@ -12,15 +12,11 @@ const UserPanel = ({ closePanel }) => {
 
   const handleLogout = async () => {
     try {
-      await axios.post(
-        `${import.meta.env.VITE_API_BASE_URL}/users/logout`,
-        {},
-        { withCredentials: true }
-      );
+      await api.post('/users/logout');
       dispatch(clearUser());
       navigate('/login');
     } catch (error) {
-      console.error('Logout failed:', error);
+      console.error('Logout failed', error);
     }
   };
 

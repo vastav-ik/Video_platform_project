@@ -36,8 +36,9 @@ function Login() {
         `${import.meta.env.VITE_API_BASE_URL}/users/login`,
         formData
       );
-      const { accessToken, user } = response.data.data;
+      const { accessToken, refreshToken, user } = response.data.data;
       localStorage.setItem('accessToken', accessToken);
+      localStorage.setItem('refreshToken', refreshToken);
       dispatch(login(user));
       toast.success('Login successful!');
       navigate('/');

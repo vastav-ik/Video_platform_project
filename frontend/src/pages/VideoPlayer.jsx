@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import axios from 'axios';
+import api from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -34,27 +34,17 @@ function VideoPlayer() {
   useEffect(() => {
     const fetchVideoData = async () => {
       try {
-        const token = localStorage.getItem('accessToken');
-        const headers = token ? { Authorization: `Bearer ${token}` } : {};
-
         const [videoRes, commentsRes, relatedRes] = await Promise.all([
-          axios.get(`${import.meta.env.VITE_API_BASE_URL}/videos/${videoId}`, {
-            headers,
-          }),
-          axios.get(
-            `${import.meta.env.VITE_API_BASE_URL}/comments/video/${videoId}`,
-            { headers }
-          ),
-          axios.get(`${import.meta.env.VITE_API_BASE_URL}/videos`, {
-            params: { limit: 10 },
-          }),
+          api.get(`/videos/${videoId}`),
+          api.get(`/comments/video/${videoId}`),
+          api.get(`/videos`, { params: { limit: 10 } }),
         ]);
 
         const videoData = videoRes.data.data;
         setVideo(videoData);
         setLikesCount(videoData.likesCount || 0);
         setIsLiked(videoData.isLiked || false);
-        setIsSubscribed(videoData.owner?.isSubscribed || false);
+        setIsSubscribed(videoData.isSubscribed || false);
         setComments(commentsRes.data.data.docs || []);
         setRelatedVideos(
           (relatedRes.data.data?.docs || []).filter(v => v._id !== videoId)
@@ -66,24 +56,12 @@ function VideoPlayer() {
       }
     };
 
-    if (videoId) {
-      fetchVideoData();
-    }
+    if (videoId) fetchVideoData();
   }, [videoId]);
 
   const handleLike = async () => {
     try {
-      const token = localStorage.getItem('accessToken');
-      if (!token) {
-        toast.error('Please login to like videos');
-        return;
-      }
-
-      await axios.post(
-        `${import.meta.env.VITE_API_BASE_URL}/likes/toggle/v/${videoId}`,
-        {},
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      await api.post(`/likes/toggle/v/${videoId}`);
       setIsLiked(prev => !prev);
       setLikesCount(prev => (isLiked ? prev - 1 : prev + 1));
     } catch (error) {
@@ -93,21 +71,11 @@ function VideoPlayer() {
 
   const handleSubscribe = async () => {
     try {
-      const token = localStorage.getItem('accessToken');
-
-      if (!token) {
-        toast.error('Please login to subscribe');
-        return;
-      }
       if (!video?.owner?._id) {
         return;
       }
 
-      await axios.post(
-        `${import.meta.env.VITE_API_BASE_URL}/subscriptions/c/${video.owner._id}`,
-        {},
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      await api.post(`/subscriptions/c/${video.owner._id}`);
       setIsSubscribed(prev => !prev);
       toast.success(isSubscribed ? 'Unsubscribed' : 'Subscribed!');
     } catch (error) {
@@ -120,17 +88,9 @@ function VideoPlayer() {
     if (!newComment.trim()) return;
 
     try {
-      const token = localStorage.getItem('accessToken');
-      if (!token) {
-        toast.error('Please login to comment');
-        return;
-      }
-
-      const response = await axios.post(
-        `${import.meta.env.VITE_API_BASE_URL}/comments/video/${videoId}`,
-        { content: newComment },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      const response = await api.post(`/comments/video/${videoId}`, {
+        content: newComment,
+      });
       setComments([response.data.data, ...comments]);
       setNewComment('');
       toast.success('Comment posted');
@@ -237,12 +197,14 @@ function VideoPlayer() {
                     {formatViews(video.owner.subscribersCount)} subscribers
                   </p>
                 </div>
-                <Button
-                  onClick={handleSubscribe}
-                  className="ml-4 rounded-full bg-foreground text-background transition-all hover:scale-105 hover:bg-foreground/90 active:scale-95 px-6"
-                >
-                  {isSubscribed ? 'Subscribed' : 'Subscribe'}
-                </Button>
+                {currentUser?._id !== video.owner?._id && (
+                  <Button
+                    onClick={handleSubscribe}
+                    className="ml-4 rounded-full bg-foreground text-background transition-all hover:scale-105 hover:bg-foreground/90 active:scale-95 px-6"
+                  >
+                    {isSubscribed ? 'Subscribed' : 'Subscribe'}
+                  </Button>
+                )}
               </div>
 
               <div className="flex items-center space-x-2">

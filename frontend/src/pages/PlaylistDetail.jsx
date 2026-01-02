@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Trash2, Play } from 'lucide-react';
 
@@ -13,13 +13,7 @@ function PlaylistDetail() {
   useEffect(() => {
     const fetchPlaylist = async () => {
       try {
-        const token = localStorage.getItem('accessToken');
-        const headers = token ? { Authorization: `Bearer ${token}` } : {};
-
-        const response = await axios.get(
-          `${import.meta.env.VITE_API_BASE_URL}/playlists/${playlistId}`,
-          { headers }
-        );
+        const response = await api.get(`/playlists/${playlistId}`);
         setPlaylist(response.data.data);
       } catch (error) {
       } finally {
@@ -33,23 +27,14 @@ function PlaylistDetail() {
   const handleDelete = async () => {
     if (!confirm('Are you sure you want to delete this playlist?')) return;
     try {
-      const token = localStorage.getItem('accessToken');
-      await axios.delete(
-        `${import.meta.env.VITE_API_BASE_URL}/playlists/${playlistId}`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      await api.delete(`/playlists/${playlistId}`);
       navigate('/playlists');
     } catch (error) {}
   };
 
   const handleRemoveVideo = async videoId => {
     try {
-      const token = localStorage.getItem('accessToken');
-      await axios.patch(
-        `${import.meta.env.VITE_API_BASE_URL}/playlists/remove/${videoId}/${playlistId}`,
-        {},
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      await api.patch(`/playlists/remove/${videoId}/${playlistId}`);
       setPlaylist(prev => ({
         ...prev,
         videos: prev.videos.filter(v => v._id !== videoId),

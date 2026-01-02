@@ -7,6 +7,7 @@ import {
 import { ApiResponse } from '../utilities/APIResponse.js';
 import { User } from '../models/user.models.js';
 import jwt from 'jsonwebtoken';
+import mongoose from 'mongoose';
 
 const COOKIE_OPTIONS = {
   httpOnly: true,
@@ -79,13 +80,14 @@ const loginUser = asyncHandler(async (req, res) => {
 const registerUser = asyncHandler(async (req, res) => {
   const { username, fullName, email, password } = req.body;
 
-  if (!username || !fullName || !email || !password) {
+  if ([username, fullName, email, password].some(field => !field?.trim())) {
     throw new ApiError(400, 'All fields are required');
   }
 
   const existingUser = await User.findOne({
     $or: [{ email }, { username }],
   });
+
   if (existingUser) {
     throw new ApiError(409, 'User with given email or username already exists');
   }
@@ -93,62 +95,45 @@ const registerUser = asyncHandler(async (req, res) => {
   const avatarLocalPath = req.files?.avatar?.[0]?.path;
   const coverLocalPath = req.files?.coverImage?.[0]?.path;
 
-  if (!avatarLocalPath) {
-    throw new ApiError(400, 'Avatar image is required');
-  }
+  let avatar = {
+    url: 'https://res.cloudinary.com/demo/image/upload/v1533751697/sample.jpg',
+    publicId: null,
+  };
 
-  let avatar;
-  try {
-    avatar = await uploadOnCloudinary(avatarLocalPath);
-  } catch (error) {
-    throw new ApiError(500, 'Failed to upload avatar image');
+  if (avatarLocalPath) {
+    const uploaded = await uploadOnCloudinary(avatarLocalPath);
+    if (!uploaded) throw new ApiError(500, 'Failed to upload avatar');
+    avatar = { url: uploaded.url, publicId: uploaded.public_id };
   }
 
   let coverImage = null;
   if (coverLocalPath) {
-    try {
-      coverImage = await uploadOnCloudinary(coverLocalPath);
-    } catch (error) {
-      throw new ApiError(500, 'Failed to upload cover image');
-    }
+    const uploaded = await uploadOnCloudinary(coverLocalPath);
+    if (!uploaded) throw new ApiError(500, 'Failed to upload cover image');
+    coverImage = { url: uploaded.url, publicId: uploaded.public_id };
   }
 
   try {
-    const newUser = await User.create({
+    const user = await User.create({
       username: username.toLowerCase(),
       fullName,
       email,
       password,
-      avatar: {
-        url: avatar.url,
-        publicId: avatar.public_id,
-      },
-      coverImage: coverImage
-        ? {
-            url: coverImage.url,
-            publicId: coverImage.public_id,
-          }
-        : undefined,
+      avatar,
+      coverImage: coverImage || undefined,
     });
 
-    const createdUser = await User.findById(newUser._id).select(
+    const createdUser = await User.findById(user._id).select(
       '-password -refreshToken'
     );
-    if (!createdUser) {
-      throw new ApiError(500, 'User registration failed');
-    }
 
     return res
       .status(201)
       .json(new ApiResponse(201, createdUser, 'User registered successfully'));
   } catch (error) {
-    if (avatar?.public_id) {
-      await deleteFromCloudinary(avatar.public_id);
-    }
-    if (coverImage?.public_id) {
-      await deleteFromCloudinary(coverImage.public_id);
-    }
-    throw new ApiError(500, 'User registration failed and images were deleted');
+    if (avatar?.publicId) await deleteFromCloudinary(avatar.publicId);
+    if (coverImage?.publicId) await deleteFromCloudinary(coverImage.publicId);
+    throw new ApiError(500, 'Registration failed');
   }
 });
 
@@ -377,6 +362,9 @@ const updateUserPassword = asyncHandler(async (req, res) => {
 
 const getUserChannelProfile = asyncHandler(async (req, res) => {
   const { username } = req.params;
+  const userId = req.user?._id
+    ? new mongoose.Types.ObjectId(req.user._id)
+    : null;
 
   if (!username?.trim()) {
     throw new ApiError(400, 'username is required');
@@ -414,7 +402,7 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
         },
         isSubscribed: {
           $cond: {
-            if: { $in: [req.user?._id, '$subscribers.subscriber'] },
+            if: { $in: [userId, '$subscribers.subscriber'] },
             then: true,
             else: false,
           },
@@ -430,7 +418,7 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
                       as: 'sub',
                       cond: {
                         $and: [
-                          { $eq: ['$$sub.subscriber', req.user?._id] },
+                          { $eq: ['$$sub.subscriber', userId] },
                           { $eq: ['$$sub.isMember', true] },
                         ],
                       },
@@ -448,6 +436,7 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
     },
     {
       $project: {
+        _id: 1,
         fullName: 1,
         username: 1,
         subscribersCount: 1,

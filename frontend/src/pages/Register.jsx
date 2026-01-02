@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from '@/lib/toast';
@@ -40,13 +40,9 @@ function Register() {
     }
 
     try {
-      const response = await axios.post(
-        `${import.meta.env.VITE_API_BASE_URL}/users/register`,
-        data,
-        {
-          headers: { 'Content-Type': 'multipart/form-data' },
-        }
-      );
+      await api.post('/users/register', data, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
       toast.success('Registration successful! Please login.');
       navigate('/login');
     } catch (err) {

@@ -29,7 +29,7 @@ const videoSchema = new Schema(
     },
     transcodedFiles: [
       {
-        quality: String, // '1080p', '720p', etc.
+        quality: String,
         url: String,
       },
     ],

@@ -7,9 +7,6 @@ import { asyncHandler } from '../utilities/asyncHandler.js';
 
 const toggleSubscription = asyncHandler(async (req, res) => {
   const { channelId } = req.params;
-  console.log(
-    `Toggling subscription for user ${req.user?._id} to channel ${channelId}`
-  );
 
   if (!isValidObjectId(channelId)) {
     throw new ApiError(400, 'Invalid Channel ID');
@@ -178,9 +175,6 @@ const getSubscribedChannels = asyncHandler(async (req, res) => {
 
 const toggleMembership = asyncHandler(async (req, res) => {
   const { channelId } = req.params;
-  console.log(
-    `[DEBUG] Attempting to toggle membership. User: ${req.user?._id}, Channel: ${channelId}`
-  );
 
   if (!isValidObjectId(channelId)) {
     throw new ApiError(400, 'Invalid Channel ID');

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import api from '@/lib/api';
 import {
   Dialog,
   DialogContent,
@@ -25,9 +25,7 @@ export function AddToPlaylistModal({ videoId }) {
       if (!userStr) return;
       const user = JSON.parse(userStr);
 
-      const response = await axios.get(
-        `${import.meta.env.VITE_API_BASE_URL}/playlists/user/${user._id}`
-      );
+      const response = await api.get(`/playlists/user/${user._id}`);
       setPlaylists(response.data.data || []);
     } catch (error) {
       console.error('Error fetching playlists', error);
@@ -43,12 +41,7 @@ export function AddToPlaylistModal({ videoId }) {
   const createPlaylist = async () => {
     if (!newPlaylistName.trim()) return;
     try {
-      const token = localStorage.getItem('accessToken');
-      await axios.post(
-        `${import.meta.env.VITE_API_BASE_URL}/playlists`,
-        { name: newPlaylistName, description: '' },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      await api.post('/playlists', { name: newPlaylistName, description: '' });
       setNewPlaylistName('');
       fetchPlaylists();
     } catch (error) {
@@ -58,19 +51,10 @@ export function AddToPlaylistModal({ videoId }) {
 
   const toggleVideoInPlaylist = async (playlistId, isPresent) => {
     try {
-      const token = localStorage.getItem('accessToken');
       if (isPresent) {
-        await axios.patch(
-          `${import.meta.env.VITE_API_BASE_URL}/playlists/remove/${videoId}/${playlistId}`,
-          {},
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
+        await api.patch(`/playlists/remove/${videoId}/${playlistId}`);
       } else {
-        await axios.patch(
-          `${import.meta.env.VITE_API_BASE_URL}/playlists/add/${videoId}/${playlistId}`,
-          {},
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
+        await api.patch(`/playlists/add/${videoId}/${playlistId}`);
       }
       fetchPlaylists();
     } catch (error) {}

@@ -9,7 +9,7 @@ import { asyncHandler } from '../utilities/asyncHandler.js';
 
 const toggleVideoLike = asyncHandler(async (req, res) => {
   const { videoId } = req.params;
-  const { type = 'like' } = req.body;
+  const { type = 'like' } = req.body || {};
 
   if (!isValidObjectId(videoId)) {
     throw new ApiError(400, 'Invalid Video ID');
@@ -28,20 +28,20 @@ const toggleVideoLike = asyncHandler(async (req, res) => {
       return res
         .status(200)
         .json(new ApiResponse(200, { type: null }, 'Removed successfully'));
-    } else {
-      const oldType = existingResponse.type;
-      existingResponse.type = type;
-      await existingResponse.save();
-
-      const incUpdate = {};
-      incUpdate[type === 'like' ? 'likesCount' : 'dislikesCount'] = 1;
-      incUpdate[oldType === 'like' ? 'likesCount' : 'dislikesCount'] = -1;
-
-      await Video.findByIdAndUpdate(videoId, { $inc: incUpdate });
-      return res
-        .status(200)
-        .json(new ApiResponse(200, { type }, `Switched to ${type}`));
     }
+
+    const oldType = existingResponse.type;
+    existingResponse.type = type;
+    await existingResponse.save();
+
+    const incUpdate = {};
+    incUpdate[type === 'like' ? 'likesCount' : 'dislikesCount'] = 1;
+    incUpdate[oldType === 'like' ? 'likesCount' : 'dislikesCount'] = -1;
+
+    await Video.findByIdAndUpdate(videoId, { $inc: incUpdate });
+    return res
+      .status(200)
+      .json(new ApiResponse(200, { type }, `Switched to ${type}`));
   }
 
   await Like.create({
@@ -60,7 +60,7 @@ const toggleVideoLike = asyncHandler(async (req, res) => {
 
 const toggleCommentLike = asyncHandler(async (req, res) => {
   const { commentId } = req.params;
-  const { type = 'like' } = req.body;
+  const { type = 'like' } = req.body || {};
 
   if (!isValidObjectId(commentId)) {
     throw new ApiError(400, 'Invalid Comment ID');
@@ -79,20 +79,20 @@ const toggleCommentLike = asyncHandler(async (req, res) => {
       return res
         .status(200)
         .json(new ApiResponse(200, { type: null }, 'Removed successfully'));
-    } else {
-      const oldType = existingResponse.type;
-      existingResponse.type = type;
-      await existingResponse.save();
-
-      const incUpdate = {};
-      incUpdate[type === 'like' ? 'likesCount' : 'dislikesCount'] = 1;
-      incUpdate[oldType === 'like' ? 'likesCount' : 'dislikesCount'] = -1;
-
-      await Comment.findByIdAndUpdate(commentId, { $inc: incUpdate });
-      return res
-        .status(200)
-        .json(new ApiResponse(200, { type }, `Switched to ${type}`));
     }
+
+    const oldType = existingResponse.type;
+    existingResponse.type = type;
+    await existingResponse.save();
+
+    const incUpdate = {};
+    incUpdate[type === 'like' ? 'likesCount' : 'dislikesCount'] = 1;
+    incUpdate[oldType === 'like' ? 'likesCount' : 'dislikesCount'] = -1;
+
+    await Comment.findByIdAndUpdate(commentId, { $inc: incUpdate });
+    return res
+      .status(200)
+      .json(new ApiResponse(200, { type }, `Switched to ${type}`));
   }
 
   await Like.create({
@@ -111,7 +111,7 @@ const toggleCommentLike = asyncHandler(async (req, res) => {
 
 const toggleCardLike = asyncHandler(async (req, res) => {
   const { cardId } = req.params;
-  const { type = 'like' } = req.body;
+  const { type = 'like' } = req.body || {};
 
   if (!isValidObjectId(cardId)) {
     throw new ApiError(400, 'Invalid Card ID');
@@ -130,20 +130,20 @@ const toggleCardLike = asyncHandler(async (req, res) => {
       return res
         .status(200)
         .json(new ApiResponse(200, { type: null }, 'Removed successfully'));
-    } else {
-      const oldType = existingResponse.type;
-      existingResponse.type = type;
-      await existingResponse.save();
-
-      const incUpdate = {};
-      incUpdate[type === 'like' ? 'likesCount' : 'dislikesCount'] = 1;
-      incUpdate[oldType === 'like' ? 'likesCount' : 'dislikesCount'] = -1;
-
-      await Card.findByIdAndUpdate(cardId, { $inc: incUpdate });
-      return res
-        .status(200)
-        .json(new ApiResponse(200, { type }, `Switched to ${type}`));
     }
+
+    const oldType = existingResponse.type;
+    existingResponse.type = type;
+    await existingResponse.save();
+
+    const incUpdate = {};
+    incUpdate[type === 'like' ? 'likesCount' : 'dislikesCount'] = 1;
+    incUpdate[oldType === 'like' ? 'likesCount' : 'dislikesCount'] = -1;
+
+    await Card.findByIdAndUpdate(cardId, { $inc: incUpdate });
+    return res
+      .status(200)
+      .json(new ApiResponse(200, { type }, `Switched to ${type}`));
   }
 
   await Like.create({
@@ -161,11 +161,14 @@ const toggleCardLike = asyncHandler(async (req, res) => {
 });
 
 const getLikedVideos = asyncHandler(async (req, res) => {
+  const userId = req.user?._id;
+
   const likedVideos = await Like.aggregate([
     {
       $match: {
-        likedBy: new mongoose.Types.ObjectId(req.user?._id),
+        likedBy: new mongoose.Types.ObjectId(userId),
         video: { $exists: true },
+        type: 'like',
       },
     },
     {

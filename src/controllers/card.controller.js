@@ -142,15 +142,10 @@ const getUserCards = asyncHandler(async (req, res) => {
     },
   ]);
 
-  Card.aggregatePaginate(cardAggregate, { page, limit })
-    .then(result => {
-      return res
-        .status(200)
-        .json(new ApiResponse(200, result, 'User cards fetched successfully'));
-    })
-    .catch(err => {
-      throw new ApiError(500, 'Failed to fetch cards');
-    });
+  const result = await Card.aggregatePaginate(cardAggregate, { page, limit });
+  return res
+    .status(200)
+    .json(new ApiResponse(200, result, 'User cards fetched successfully'));
 });
 
 const getCardById = asyncHandler(async (req, res) => {

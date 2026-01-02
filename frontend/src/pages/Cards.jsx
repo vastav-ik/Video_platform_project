@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import api from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 
@@ -20,9 +20,7 @@ function Cards() {
 
   const fetchCards = async () => {
     try {
-      const response = await axios.get(
-        `${import.meta.env.VITE_API_BASE_URL}/cards`
-      );
+      const response = await api.get('/cards');
       setCards(response.data.data?.docs || response.data.data || []);
     } catch (error) {
     } finally {
@@ -33,11 +31,7 @@ function Cards() {
   const fetchSubscriptions = async () => {
     if (!user?._id) return;
     try {
-      const token = localStorage.getItem('accessToken');
-      const response = await axios.get(
-        `${import.meta.env.VITE_API_BASE_URL}/subscriptions/u/${user._id}`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      const response = await api.get(`/subscriptions/u/${user._id}`);
       const subs = response.data.data || [];
       const channelIds = new Set(
         subs.map(sub => sub.channel?._id || sub.channel)
@@ -61,14 +55,7 @@ function Cards() {
     if (!content.trim()) return;
 
     try {
-      const token = localStorage.getItem('accessToken');
-      if (!token) return alert('Please login to post');
-
-      await axios.post(
-        `${import.meta.env.VITE_API_BASE_URL}/cards`,
-        { content },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      await api.post('/cards', { content });
       setContent('');
       fetchCards();
     } catch (error) {
