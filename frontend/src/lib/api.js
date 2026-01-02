@@ -2,7 +2,9 @@ import axios from 'axios';
 import { toast } from './toast';
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || '/api/v1',
+  baseURL: import.meta.env.PROD
+    ? '/api/v1'
+    : import.meta.env.VITE_API_BASE_URL || '/api/v1',
 });
 
 api.interceptors.request.use(
