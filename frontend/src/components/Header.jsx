@@ -33,8 +33,8 @@ function Header() {
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-foreground shadow-md">
             <Video className="h-5 w-5" />
           </div>
-          <span className="hidden font-heading text-xl font-bold tracking-tight text-foreground sm:inline-block">
-            Vidtube
+          <span className="hidden font-comical text-2xl font-normal tracking-wider text-accent sm:inline-block">
+            Looply
           </span>
         </Link>
 
