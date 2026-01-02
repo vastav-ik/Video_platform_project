@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import axios from 'axios';
+import api from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { List, Search } from 'lucide-react';
 import { toast } from 'sonner';
@@ -25,28 +25,20 @@ function ChannelProfile() {
     const fetchChannelData = async () => {
       try {
         setLoading(true);
-        const token = localStorage.getItem('accessToken');
-        const headers = token ? { Authorization: `Bearer ${token}` } : {};
-
-        const profileRes = await axios.get(
-          `${import.meta.env.VITE_API_BASE_URL}/users/c/${username}`,
-          { headers }
-        );
+        const profileRes = await api.get(`/users/c/${username}`);
         const profileData = profileRes.data.data;
         setProfile(profileData);
         setIsSubscribed(profileData.isSubscribed);
         setSubscribersCount(profileData.subscribersCount);
 
         if (profileData._id) {
-          const videosRes = await axios.get(
-            `${import.meta.env.VITE_API_BASE_URL}/videos`,
-            { params: { userId: profileData._id, limit: 50 } }
-          );
+          const videosRes = await api.get('/videos', {
+            params: { userId: profileData._id, limit: 50 },
+          });
           setVideos(videosRes.data.data.docs || []);
 
-          const playlistsRes = await axios.get(
-            `${import.meta.env.VITE_API_BASE_URL}/playlists/user/${profileData._id}`,
-            { headers }
+          const playlistsRes = await api.get(
+            `/playlists/user/${profileData._id}`
           );
           setPlaylists(playlistsRes.data.data || []);
         }
@@ -61,20 +53,7 @@ function ChannelProfile() {
 
   const handleSubscribe = async () => {
     try {
-      const token = localStorage.getItem('accessToken');
-      if (!token) {
-        toast.error('Please login to subscribe');
-        return;
-      }
-      if (!profile?._id) return;
-
-      setSubLoading(true);
-
-      await axios.post(
-        `${import.meta.env.VITE_API_BASE_URL}/subscriptions/c/${profile._id}`,
-        {},
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      await api.post(`/subscriptions/c/${profile._id}`);
 
       setIsSubscribed(prev => !prev);
       setSubscribersCount(prev => (isSubscribed ? prev - 1 : prev + 1));

@@ -1,10 +1,12 @@
 import axios from 'axios';
 import { toast } from './toast';
 
+const BASE_URL = import.meta.env.PROD
+  ? '/api/v1'
+  : import.meta.env.VITE_API_BASE_URL || '/api/v1';
+
 const api = axios.create({
-  baseURL: import.meta.env.PROD
-    ? '/api/v1'
-    : import.meta.env.VITE_API_BASE_URL || '/api/v1',
+  baseURL: BASE_URL,
 });
 
 api.interceptors.request.use(
@@ -27,10 +29,9 @@ api.interceptors.response.use(
         const refreshToken = localStorage.getItem('refreshToken');
         if (!refreshToken) throw new Error('Refresh token missing');
 
-        const res = await axios.post(
-          `${import.meta.env.VITE_API_BASE_URL || '/api/v1'}/users/refresh-token`,
-          { refreshToken }
-        );
+        const res = await axios.post(`${BASE_URL}/users/refresh-token`, {
+          refreshToken,
+        });
 
         const { accessToken, refreshToken: newRefreshToken } = res.data.data;
         localStorage.setItem('accessToken', accessToken);

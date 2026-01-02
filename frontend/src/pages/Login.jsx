@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from '@/lib/toast';
@@ -32,10 +32,7 @@ function Login() {
     e.preventDefault();
     setError('');
     try {
-      const response = await axios.post(
-        `${import.meta.env.VITE_API_BASE_URL}/users/login`,
-        formData
-      );
+      const response = await api.post('/users/login', formData);
       const { accessToken, refreshToken, user } = response.data.data;
       localStorage.setItem('accessToken', accessToken);
       localStorage.setItem('refreshToken', refreshToken);
