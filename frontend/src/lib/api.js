@@ -2,7 +2,7 @@ import axios from 'axios';
 import { toast } from './toast';
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL,
+  baseURL: import.meta.env.VITE_API_BASE_URL || '/api/v1',
 });
 
 api.interceptors.request.use(
@@ -26,7 +26,7 @@ api.interceptors.response.use(
         if (!refreshToken) throw new Error('Refresh token missing');
 
         const res = await axios.post(
-          `${import.meta.env.VITE_API_BASE_URL}/users/refresh-token`,
+          `${import.meta.env.VITE_API_BASE_URL || '/api/v1'}/users/refresh-token`,
           { refreshToken }
         );
 

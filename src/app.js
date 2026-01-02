@@ -10,7 +10,7 @@ const __dirname = path.dirname(__filename);
 const app = express();
 app.use(
   cors({
-    origin: process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : [],
+    origin: process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : '*',
     credentials: true,
   })
 );
@@ -45,8 +45,10 @@ app.use(express.static(path.join(__dirname, '../frontend/dist')));
 import { errorHandler } from './middlewares/error.middleware.js';
 app.use(errorHandler);
 
-app.get(/./, (req, res) => {
-  res.sendFile(path.join(__dirname, '../frontend/dist', 'index.html'));
+app.use((req, res) => {
+  if (req.method === 'GET' && !req.path.startsWith('/api/v1')) {
+    res.sendFile(path.resolve(__dirname, '../frontend/dist', 'index.html'));
+  }
 });
 
 export { app };

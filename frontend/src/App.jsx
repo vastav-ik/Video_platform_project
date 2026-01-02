@@ -10,8 +10,13 @@ import Cards from './pages/Cards';
 import ChannelPage from './pages/ChannelPage';
 import Playlists from './pages/Playlists';
 import PlaylistDetail from './pages/PlaylistDetail';
+import { useEffect } from 'react';
 
 function App() {
+  useEffect(() => {
+    document.title = 'Looply | Experience Everything';
+  }, []);
+
   return (
     <Router>
       <div className="relative flex min-h-screen flex-col bg-background font-sans antialiased">
